@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>easy-house playground</title>
+    <link rel="stylesheet" href="playground/editor.css">
+
+    <!-- presets import from 'easy-house' as you would: the import map says from where (see importmap.js) -->
+    <script src="importmap.js"></script>
+</head>
+<body class="workbench-page">
+<header class="bar">
+    <a class="back" href="./">← Back to the docs</a>
+    <h1>easy-house <small>playground</small></h1>
+    <nav>
+        <a href="./#/getting-started">getting started</a>
+        <a href="./#/building">describing a house</a>
+        <a href="./#/plugins">plugins</a>
+        <a href="./#/api">API</a>
+        <span class="source" id="source"></span>
+    </nav>
+</header>
+
+<div class="toolbar">
+    <select id="preset" title="Preset"></select>
+    <input id="name" placeholder="preset name" title="The preset is saved under this name, in this browser">
+    <button id="save" title="Ctrl+S">Save</button>
+    <button id="remove">Delete</button>
+    <button id="reset" title="Back to the preset as it is saved">Reset changes</button>
+    <span class="spacer"></span>
+    <label><input type="checkbox" id="fit"> fit</label>
+    <label><input type="checkbox" id="debug"> model</label>
+</div>
+
+<main class="workbench">
+    <section class="editor-pane">
+        <textarea id="code" spellcheck="false" autocomplete="off" autocapitalize="off"></textarea>
+        <p class="hint">Redraws by itself half a second after a change · Ctrl+Enter — right away · Ctrl+S — save ·
+            <code>house</code> is in the console</p>
+    </section>
+
+    <section class="result-pane">
+        <pre id="errors" class="errors" hidden></pre>
+        <div id="info" class="info"></div>
+        <div id="panel" class="panel" hidden></div>
+        <div id="stage" class="stage"></div>
+        <pre id="log" class="log" hidden></pre>
+        <div id="model" class="model" hidden></div>
+    </section>
+</main>
+
+<script>document.getElementById('source').textContent = 'library: ' + window.easyHouseSource;</script>
+<script type="module" src="playground/editor.js"></script>
+</body>
+</html>

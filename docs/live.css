@@ -1,0 +1,259 @@
+/* Layout and chrome for the live examples produced by live.js. */
+
+.live-example {
+    display: flex;
+    flex-direction: column;      /* stage on top, source below — code never gets squeezed */
+    margin: 1.4rem 0;
+    padding: 0;
+    border: 1px solid #eaeaea;
+    border-radius: 6px;
+    overflow: hidden;
+    background: #fff;
+}
+
+.live-stage {
+    display: flex;
+    padding: 1.25rem 1rem;
+    overflow: auto;
+    background: #fff;           /* the squares are light grey: a white stage keeps them seen */
+}
+
+/* centred while there is room; a house wider than the page scrolls instead of being cut on the left */
+.live-stage > * {
+    margin: auto;
+}
+
+/* a house is drawn at its natural size: its width and height in px come from the model */
+.live-stage svg {
+    display: block;
+}
+
+.live-source {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    border-top: 1px solid #eaeaea;
+}
+
+.live-source > pre {
+    flex: 1 1 auto;
+    margin: 0 !important;
+    border-radius: 0 !important;
+    overflow: auto;
+}
+
+.live-source > pre[data-lang]::after {
+    display: none;
+}
+
+/* The stage itself: as big as the house drawn in it. */
+.demo {
+    display: inline-block;
+}
+
+.demo-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+}
+
+/* Opt-in backdrops for houses drawn in light colours. */
+.demo.on-dark,
+.demo-row.on-dark {
+    background: #2c3e50;
+    border-radius: 4px;
+}
+
+.demo.on-silver,
+.demo-row.on-silver {
+    background: silver;
+    border-radius: 4px;
+}
+
+/* Caption under a stage, for rows that compare several settings. */
+.demo figcaption,
+.demo-row figcaption {
+    margin-top: 0.3rem;
+    font-family: monospace;
+    font-size: 0.8rem;
+    color: #48515a;
+    text-align: center;
+}
+
+.demo-row > figure {
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Toolbar */
+
+.live-toolbar {
+    flex: 0 0 auto;
+    display: flex;
+    gap: 0.35rem;
+    padding: 0.4rem 0.6rem;
+    border-top: 1px solid #eaeaea;
+    background: #fafafa;
+}
+
+.live-button {
+    padding: 0.15rem 0.6rem;
+    font-size: 0.75rem;
+    font-family: inherit;
+    color: #42b983;
+    background: transparent;
+    border: 1px solid #42b983;
+    border-radius: 3px;
+    cursor: pointer;
+}
+
+.live-button:hover {
+    color: #fff;
+    background: #42b983;
+}
+
+pre.is-editing {
+    outline: 2px solid #42b983;
+    outline-offset: -2px;
+}
+
+pre.is-editing code {
+    display: block;
+    min-height: 4rem;
+    white-space: pre-wrap;
+}
+
+.live-error {
+    max-width: 100%;
+    margin: 0;
+    padding: 0.6rem;
+    font-size: 0.7rem;
+    line-height: 1.4;
+    color: #fff;
+    background: #c0392b;
+    border-radius: 3px;
+    white-space: pre-wrap;
+    overflow: auto;
+}
+
+
+/* The configurator of the introduction (configurator.js): the house and the controls, the code under them. */
+
+.configurator {
+    margin: 1.4rem 0;
+    border: 1px solid #eaeaea;
+    border-radius: 6px;
+    overflow: hidden;
+    background: #fff;
+}
+
+.configurator-top {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 270px;
+}
+
+/* the house at its natural size, as tall as the controls: a big one scrolls inside, the controls stay where they
+   are (contain: size — the house does not count in the height of the row) */
+.configurator-stage {
+    display: flex;
+    contain: size;
+    padding: 1rem;
+    overflow: auto;
+}
+
+.configurator-stage > svg {
+    margin: auto;
+}
+
+.configurator-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    padding: 0.7rem 0.9rem;
+    border-left: 1px solid #eaeaea;
+    background: #fafafa;
+    font-size: 0.78rem;
+    line-height: 1.2;
+}
+
+.configurator-controls .control {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: 0.5rem;
+    min-height: 1.5rem;
+    color: #34495e;
+}
+
+.configurator-controls .control.range {
+    grid-template-columns: 7.5rem 1fr 1.6rem;
+}
+
+.configurator-controls .control.range input {
+    width: 100%;
+    margin: 0;
+}
+
+.configurator-controls .control .value {
+    text-align: right;
+}
+
+.configurator-controls .control.check {
+    grid-template-columns: auto 1fr;
+    cursor: pointer;
+}
+
+.configurator-controls .control.check input {
+    margin: 0;
+}
+
+.configurator-controls .control.off {
+    opacity: 0.4;
+    cursor: default;
+}
+
+.configurator-controls select {
+    font: inherit;
+    padding: 0.05rem 0.2rem;
+}
+
+.configurator-code {
+    position: relative;
+    border-top: 1px solid #eaeaea;
+}
+
+.configurator-code pre {
+    margin: 0 !important;
+    border-radius: 0 !important;
+}
+
+.configurator-code pre[data-lang]::after {
+    display: none;
+}
+
+.configurator-open {
+    position: absolute;
+    top: 0.6rem;
+    right: 0.9rem;
+    font-size: 0.8rem;
+}
+
+@media (max-width: 720px) {
+    .configurator-top {
+        grid-template-columns: 1fr;
+    }
+
+    .configurator-stage {
+        contain: none;
+        max-height: 480px;
+    }
+
+    .configurator-controls {
+        border-left: 0;
+        border-top: 1px solid #eaeaea;
+    }
+}

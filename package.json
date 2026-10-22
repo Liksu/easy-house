@@ -1,0 +1,48 @@
+{
+    "name": "easy-house",
+    "version": "1.0.0",
+    "description": "Draws an apartment building in SVG: every flat is a square in its place. A short config, plugins, events",
+    "type": "module",
+    "main": "./index.js",
+    "types": "./index.d.ts",
+    "exports": {
+        ".": {
+            "types": "./index.d.ts",
+            "default": "./index.js"
+        }
+    },
+    "files": [
+        "index.js",
+        "index.d.ts",
+        "src"
+    ],
+    "sideEffects": false,
+    "scripts": {
+        "dev": "node scripts/serve.js",
+        "test": "node --test \"test/**/*.test.js\"",
+        "types": "npx -p typescript tsc -p test/types"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/Liksu/easy-house.git"
+    },
+    "homepage": "https://liksu.github.io/easy-house",
+    "bugs": {
+        "url": "https://github.com/Liksu/easy-house/issues"
+    },
+    "keywords": [
+        "svg",
+        "house",
+        "building",
+        "apartment",
+        "flats",
+        "floors",
+        "housing association",
+        "visualization"
+    ],
+    "author": "Petro Borshchahivskyi",
+    "license": "MIT",
+    "dependencies": {
+        "svg-easy-tree": "^1.0.3"
+    }
+}

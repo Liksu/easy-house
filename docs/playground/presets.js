@@ -1,0 +1,638 @@
+// Built-in presets of the playground. Each is an ES module as text: `export default` is the house config,
+// an optional `export const state` is the state of the units (by id), an optional `export function setup(house, {log, panel})`
+// runs after drawing. Bare imports go through the import map.
+import {defaultGeometry, defaultKinds, sizes, colors, cells, floorLabels, dividers, reactions, stacks, text, roof, hover} from 'easy-house';
+
+export const presets = [
+    {
+        name: 'Every option (the defaults)',
+        code: fullConfig()
+    },
+    {
+        name: 'A tall house: a salon and a concierge',
+        code: `// 22 floors of 5 units: on the ground floor a beauty salon and a concierge — kinds of units; three flats on the 22nd
+export default {
+    units: 5,
+    kinds: {
+        salon: {label: 'S', title: 'Beauty salon'},
+        concierge: {label: 'C', title: 'Concierge'}
+    },
+    floors: {
+        to: 22,
+        1: {'@4': {kind: 'salon'}, '@5': {kind: 'concierge'}},     // '@n' — a position: structure
+        22: 3
+    }
+};
+`
+    },
+    {
+        name: 'The same, the row by hand',
+        code: `// A row may be an array — the whole row, explicitly; the tail is empty.
+// 'S' and 'C' do not start with a digit — they are labels and take no number
+export default {
+    units: 5,
+    floors: {to: 22, 1: [1, 2, 3, 'S', 'C'], 22: 3}
+};
+`
+    },
+    {
+        name: 'A hole, a shop, explicit numbers',
+        code: `// A hole, a shop on two positions; the numbering goes on from explicit numbers — there are no 18 and 19
+export default {
+    floors: 4,
+    units: 5,
+    kinds: {shop: {enumerable: false}},      // a kind of our own: not numbered
+    sections: [
+        {floors: {1: ['S', 1, 2]}},
+        {floors: {1: [null, 20, 21, {colSpan: 2, kind: 'shop'}]}}
+    ]
+};
+`
+    },
+    {
+        name: 'An arch',
+        code: `// The middle section starts on the 2nd floor — a passage under it
+export default {
+    units: 4,
+    sections: [
+        {floors: 12},
+        {floors: {from: 2, to: 4}, units: 3},
+        {floors: 12}
+    ]
+};
+`
+    },
+    {
+        name: 'Sections of different height, several entrances',
+        code: `// Floor numbers are written where a floor first appears: 6–9 at the second section
+export default {
+    units: 4,
+    sections: [
+        {floors: 5, entrances: 3},
+        {floors: 9, entrances: 2}
+    ],
+    floorLabels: {at: 'house'}          // 'section' — numbers at every section, 'entrance' — at every entrance
+};
+`
+    },
+    {
+        name: 'A slope: compact and gutter',
+        code: `// base lifts a section; each next one brings a new level — it is labelled there.
+// The default look is compact: the number of a new floor is written over the neighbour, the line only as high as both.
+export default {
+    floors: 5,
+    units: 3,
+    sections: [{}, {base: 1}, {base: 2}],
+
+    // floorLabels: {at: 'section'},     // floor numbers at every section (room is reserved, mirrored)
+    // floorLabels: {mode: 'gutter'},    // room for new numbers is reserved and mirrored at the neighbour
+    // dividers: {extent: 'full'},       // the line over the full height of the neighbours
+};
+`
+    },
+    {
+        name: 'Below the ground',
+        code: `// A floor below the ground is -1: floors: {from: -1}. It stands right under the 1st (there is no floor 0)
+// and is labelled "-1:". groundFloor: 0 — the European count, where 0 is the ground floor.
+// base: -1 is something else: the whole section stands lower (a slope down).
+export default {
+    floors: 4,
+    units: 3,
+    sections: [
+        {},
+        {floors: {from: -1, to: 4, '-1': [{colSpan: 3, label: 'parking'}]}},
+        {base: -1}
+    ]
+};
+`
+    },
+    {
+        name: 'Parking: a floor draws itself',
+        code: `// render of a floor draws the whole floor: a grid of its own, more spots than flats on a floor.
+// The core knows only "floor -1" and where it stands (floor.box); everything else is here.
+// render gets the same ctx as plugins ({house, section, entrance, floor}), and base() — the usual drawing.
+const parking = ({floor}) => {
+    const {x, y, width, height} = floor.box;
+    const spots = 7;
+    const gap = 2;
+    const w = (width - gap * (spots - 1)) / spots;
+    return Array.from({length: spots}, (_, i) => [
+        {tag: 'rect', opt: {x: x + i * (w + gap), y, width: w, height, fill: '#e8eef5'}},
+        {tag: 'text', val: 'P' + (i + 1), opt: {
+            x: x + i * (w + gap) + w / 2, y: y + height / 2, fill: '#678', 'font-size': 9,
+            'font-family': 'arial', 'text-anchor': 'middle', 'dominant-baseline': 'central'
+        }}
+    ]);
+};
+
+export default {
+    floors: 4,
+    units: 3,
+    sections: [{}, {floors: {from: -1, to: 4, '-1': {units: 0, render: parking, label: 'P'}}}, {}]
+};
+`
+    },
+    {
+        name: 'Duplexes and wide flats',
+        code: `// Spans as in HTML, the sign is the direction: rowSpan: 2 — this floor and the one above, -2 — and the one below
+export default {
+    units: 4,
+    kinds: {shop: {enumerable: false}},
+    floors: {
+        to: 5,
+        1: {'@3': {colSpan: 2, kind: 'shop'}},
+        4: {'@2': {rowSpan: 2}},
+        5: {'@3': {colSpan: 2, rowSpan: -2}}
+    }
+};
+`
+    },
+    {
+        name: 'Spans by number; merged flats',
+        code: `// A span may be written by the number of a flat — as you see it. Two cases:
+//
+// 1. The unit is designed so (a penthouse, a duplex in a new house): one number however many cells it takes,
+//    the numbers after it move. By number such a span goes only forward — up and along the floor —
+//    so the numbers before it stay. That is why 21 on the 6th floor counts the duplex 19 already.
+// 2. Flats merged in a built house — merged: true: the numbering stays, every cell keeps its number.
+//    Such a span moves nothing and goes any way: 10: {colSpan: -2, merged: true} — the flat is 10, 9 is gone.
+export default {
+    units: 4,
+    floors: {
+        to: 7,
+        2: {6: {colSpan: 2}},                       // a wide 6 — the same as '@2': {colSpan: 2}
+        3: {10: {colSpan: -2, merged: true}},       // 9 and 10 merged, the flat keeps 10
+        5: {
+            16: {rowSpan: -2, merged: true},        // 12 and 16 merged one above the other: the flat is 16, 12 is gone
+            19: {rowSpan: 2}                        // a duplex 19 — the same as '@4': {rowSpan: 2}
+        },
+        6: {21: {rowSpan: 2}}                       // and one more, over it
+    }
+};
+`
+    },
+    {
+        name: 'A short floor over a duplex',
+        code: `// 103 is a duplex up. A number on a floor is positions from the aligned edge, the cell of the duplex among them:
+// right → empty, empty, 104, 105, [103];  without align → 104, 105, 106, empty, [103]
+export default {
+    units: 5,
+    floors: {
+        to: 22,
+        1: [1, 2, 3, 'S', 'C'],
+        21: {'@5': {rowSpan: 2}},
+        22: {units: 3, align: 'right'}
+    }
+};
+`
+    },
+    {
+        name: 'Entrances right to left',
+        code: `// direction: 'rtl' — entrances right to left, and the numbers on a floor right to left too.
+// numberDirection turns only the numbers (by default it is as direction). It cascades like everything:
+// on the house, a section, an entrance, and on a floor — that makes a snake.
+export default {
+    floors: {to: 5},
+    // floors: {to: 5, 2: {numberDirection: 'ltr'}, 4: {numberDirection: 'ltr'}},   // a snake
+    units: 4,
+    entrances: 3,
+    direction: 'rtl',
+    // numberDirection: 'ltr'       // entrances right to left, but the numbers on a floor left to right
+};
+`
+    },
+    {
+        name: 'Numbers as strings',
+        code: `// A string that starts with a digit is a number: one step of the counter, so after '25/2' comes 27.
+// Uncomment numericStrings — and the counter goes from the digits of the string: next is 26
+export default {
+    units: 4,
+    floors: {to: 3, 1: [23, 24, '25/1', '25/2']},
+    // numericStrings: true
+};
+`
+    },
+    {
+        name: 'Reactions: state and house.update',
+        code: `// The config is what the house is (its structure), the state is what goes on with the flats (data), apart:
+//   new House(target, config, state);   house.update({57: {reaction: 'no'}}) — redraws only 57.
+// The reactions plugin (it is in House.plugins) colours by a field of the state: outline and number — colors, fill — fills.
+// Click a flat — the next reaction, round and round.
+export default {
+    units: 5,
+    floors: {to: 9, 1: [1, 2, 3, 'S', 'C']},
+    hover: true,
+    // reactions: {fill: true, always: true},      // fill by reaction, outline every flat
+    // reactions: {colors: {maybe: 'goldenrod'}},   // colours of your own — only what differs
+    // reactions: {style: {fontWeight: null}},      // for every flat with a reaction: not bold (default {strokeWidth: 2, fontWeight: 'bold'})
+    // reactions: {styles: {no: {fontSize: 10, color: 'black'}, none: {fill: 'white'}}},   // any look per reaction
+};
+
+// the state: the key is the id of a unit (its number by default), the value — its data
+export const state = {
+    4: {reaction: 'yes'}, 5: {reaction: 'yes'}, 9: {reaction: 'no'},
+    12: {reaction: 'maybe'}, 18: {reaction: 'ignore'}, 25: {reaction: 'yes'}, 33: {reaction: 'no'}
+};
+
+const next = {yes: 'no', no: 'maybe', maybe: 'ignore', ignore: null};
+
+export function setup(house, {log}) {
+    house.on('unit:click', ({unit}) => {
+        const reaction = unit.state.reaction === undefined ? 'yes' : next[unit.state.reaction];
+        house.update({[unit.config.id]: reaction ? {reaction} : null});     // null clears the state
+        log(unit.config.id + ': ' + (reaction ?? '—'));
+    });
+}
+
+// The same plugin under another name reads another field:
+//   plugins: [...House.plugins, {use: reactions, name: 'payments', options: {field: 'payment', colors: {paid: 'blue'}}}]
+`
+    },
+    {
+        name: 'Stacks',
+        code: `// Stacks — flats one above another in one colour. The colour is of the position the unit stands at:
+// a duplex left to right (colSpan: 2) — the colour of its left cell, right to left (colSpan: -2) — of its right one.
+// stacks comes with the house (it is in House.plugins) but is off until named: stacks: true — or a palette of your own.
+// In the console: house.redraw({stacks: false}) — the config on the fly; the state (reactions) stays.
+export default {
+    units: 4,
+    floors: {to: 7, 2: {'@1': {colSpan: 2}}, 4: {'@4': {colSpan: -2}}, 5: {'@2': {rowSpan: 2}}},
+    stacks: true,
+    // stacks: {colors: ['#ff9aa2', '#ffdac1', '#fff5a5', '#b5ead7', '#c7ceea']},   // a palette of your own
+    // reactions: {fill: true},     // a fill by reaction wins over the stacks
+};
+
+export const state = {5: {reaction: 'yes'}, 9: {reaction: 'no'}, 16: {reaction: 'maybe'}};
+`
+    },
+    {
+        name: 'Floor marks',
+        code: `// A floor mark is a field of the floor: mark. It stands in front of the floor number ("✓ 21:"), in any mode of floorLabels.
+// Several — an array. What is written — floorLabels.marks (done ✓, progress ⏳, extinguisher 🧯); an unknown one as it is.
+// Any plugin may put its own sign there too — its mark hook.
+// On the fly, from the console: house.redraw({floors: {4: {mark: 'done'}}}).
+export default {
+    units: 4,
+    floors: {
+        to: 7,
+        1: {mark: 'extinguisher'},
+        2: {mark: 'done'},
+        3: {mark: ['done', 'extinguisher']},
+        5: {mark: 'progress'},
+        6: {units: [21, 22, 23, 24], mark: '★'}     // the whole row and the fields of the floor beside it: the row is in units
+    },
+    // floorLabels: {marks: {done: '✔'}},         // marks of your own
+    // floorLabels: {at: 'section'},              // marks go with the numbers, wherever those stand
+};
+`
+    },
+    {
+        name: 'Percent, legend, text block',
+        code: `import {count} from 'easy-house';
+
+// The reactions plugin counts its reactions itself — and writes what it counted: the percent and the legend (off until named).
+// It writes them with the text block — the one of the text plugin, but text knows nothing about reactions: it writes the lines it is given.
+// What was counted, from outside — count(house): {total, groups, yes: {count, share, percent, name, color}, …}.
+// Click a flat — the next reaction: the percent and the legend are counted again.
+export default {
+    units: 4,
+    floors: {to: 7, 7: 2},
+    reactions: {
+        names: {yes: 'yes', no: 'no', maybe: 'maybe', none: 'no answer'},
+        percent: {at: 'floor:7', y: '50%', valign: 'middle'},     // where: by default a band above the house
+        // percent: {show: 'count:no'},       // =14; 'yes/no' — two counts; or lines of your own: text: ['{{no.percent}}% against']
+        legend: true                          // a line per group, columns aligned; a band under the house
+    },
+    // the text plugin — just lines: parts of lines, a place (house | section:N | floor:N | top | bottom)
+    text: {
+        at: 'top', x: '50%', align: 'center',
+        // border: '1px dashed silver',          // a border if you like; none by default
+        text: [{value: 'Roof repair', weight: 'bold'}, ['vote until ', {value: 'November 1', color: 'crimson'}]]
+    },
+    hover: true
+};
+
+export const state = {
+    1: {reaction: 'yes'}, 2: {reaction: 'yes'}, 3: {reaction: 'no'}, 6: {reaction: 'yes'}, 7: {reaction: 'maybe'},
+    9: {reaction: 'yes'}, 12: {reaction: 'no'}, 14: {reaction: 'yes'}, 17: {reaction: 'yes'}, 21: {reaction: 'yes'}
+};
+
+const next = {yes: 'no', no: 'maybe', maybe: null};
+
+export function setup(house, {log}) {
+    const show = () => {
+        const counted = count(house);
+        log('yes ' + counted.yes.count + ' of ' + counted.total + ' — ' + counted.yes.percent + '%');
+    };
+    show();
+    house.on('unit:click', ({unit}) => {
+        const reaction = unit.state.reaction === undefined ? 'yes' : next[unit.state.reaction];
+        house.update({[unit.config.id]: reaction ? {reaction} : null});
+        show();
+    });
+}
+`
+    },
+    {
+        name: 'Themes: dark and night',
+        code: `// A theme is a palette (colours by name) and the options a look needs: theme: 'dark' | 'night' | 'light'.
+// What the config says itself wins: colors: {unit: '#333'}. A colour of the palette in any option — '$name'.
+// Night: dark walls and windows; flats with yes are lit with a warm light and a glow, maybe — dimly.
+// Click a window to light it or to turn the light off.
+export default {
+    units: 4,
+    sections: [{floors: 7}, {floors: {from: 2, to: 7}}, {floors: 9, entrances: 2}],
+    theme: 'night',
+    roof: true,
+    // theme: 'dark',
+    // colors: {yesFill: '#9fd3ff', glow: 'rgba(120, 190, 255, 0.5)'},     // a cold light
+    hover: {aim: 'both'}
+};
+
+export const state = {
+    3: {reaction: 'yes'}, 6: {reaction: 'yes'}, 9: {reaction: 'maybe'}, 14: {reaction: 'yes'}, 15: {reaction: 'yes'},
+    22: {reaction: 'yes'}, 31: {reaction: 'yes'}, 40: {reaction: 'maybe'}, 47: {reaction: 'yes'}, 58: {reaction: 'yes'}
+};
+
+export function setup(house) {
+    house.on('unit:click', ({unit}) => house.update({[unit.config.id]: unit.state.reaction === 'yes' ? null : {reaction: 'yes'}}));
+}
+`
+    },
+    {
+        name: 'Small: a size in one word',
+        code: `// A size in one word is a small house: its geometry, no numbers and floors, the squares filled by reaction, no outline.
+// The words: pixel, icon, xxs, xs, s, m, l, xl (and extraSmall … extraLarge).
+// What the config says itself wins: size: 'xs', floorLabels: {} — with floor numbers. A number is a number, as always.
+export default {
+    units: 5,
+    floors: {to: 22, 22: 3},
+    size: 'm',
+    // size: 'pixel',
+    // reactions: {fills: {yes: 'gold'}},     // a fill of your own over the palette of small houses
+};
+
+export const state = {
+    1: {reaction: 'yes'}, 2: {reaction: 'yes'}, 3: {reaction: 'no'}, 7: {reaction: 'maybe'}, 12: {reaction: 'yes'},
+    18: {reaction: 'yes'}, 25: {reaction: 'no'}, 33: {reaction: 'yes'}, 41: {reaction: 'yes'}, 56: {reaction: 'yes'},
+    64: {reaction: 'no'}, 78: {reaction: 'yes'}, 90: {reaction: 'yes'}, 101: {reaction: 'maybe'}, 105: {reaction: 'yes'}
+};
+`
+    },
+    {
+        name: 'Marks: one plugin under several names',
+        code: `import {House, icon} from 'easy-house';
+
+// The mechanics are one — a mark in a corner of a flat — so the plugin is one, and its instances are several, each with a name:
+//   {use: icon, name: 'oldman', options: {…}}
+// The name is everything: the options (oldman: {…} on the house), the switch (oldman: null), the field of a flat (21: {rental: true}).
+// Marks of different instances in one corner stand side by side — a pensioner may rent out a flat.
+export default {
+    units: 5,
+    floors: {
+        to: 22,
+        1: [1, 2, 3, 'S', 'C'],
+        22: 3,
+        5: {21: {rental: true}},                 // 21 — a pensioner, and rented out
+        13: {62: {oldman: {icon: '👵🏻'}}}         // an icon of its own for one flat: options by the same name
+    },
+    plugins: [
+        ...House.plugins,
+        {use: icon, name: 'oldman', options: {icon: '👴🏻', title: 'a pensioner'}},     // title — a tooltip of the mark
+        {use: icon, name: 'rental', options: {icon: '💰', title: 'rented out'}}
+        // a text mark: options: {…, color: 'blue', font: 'arial, sans-serif'}; corner, size — its place and size
+    ],
+    oldman: {units: [6, 10, 21, 28, 31, 40, 48, 50, 60, 74, 76, 81, 85, 92, 94, 97, 98, 105]},
+    rental: {units: [9, 11, 17, 26, 59, 69, 78, 80]}
+    // rental: null                         // switch an instance off by its name
+};
+`
+    },
+    {
+        name: 'A plugin of your own',
+        code: `import {House} from 'easy-house';
+
+// A plugin is an object with hooks by level: house, section, entrance, floor, unit (over it), style and render (the unit itself).
+// A hook gets the chain of levels {house, section, entrance, floor, unit} — each {config, box, node},
+// name — the name of the instance, and options — its options at this level (debt: {…} on the house, a floor, a flat — by the same name).
+// The value of the plugin at a flat is its field with the name of the plugin: 34: {debt: 1200}.
+const debt = {
+    name: 'debt',
+    options: {color: 'crimson', threshold: 0},
+    unit({unit, name, options}) {
+        const amount = unit.config[name];
+        if (!(amount > options.threshold)) return null;
+        const place = unit.place('top-right', 7);           // its own place in the corner — next to marks of others
+        return {tag: 'circle', opt: {
+            cx: place.x + place.width / 2, cy: place.y + place.height / 2, r: place.width / 2, fill: options.color
+        }};
+    }
+};
+
+export default {
+    units: 5,
+    floors: {to: 9, 7: {34: {debt: 1200}, 35: {debt: 40}}, 8: {38: {debt: 300}}},
+    plugins: [...House.plugins, debt],
+    debt: {threshold: 100}          // 35 with a debt of 40 is under the threshold
+};
+`
+    },
+    {
+        name: 'Hover, click, a resident card',
+        code: `// The highlight under the pointer is the hover plugin (CSS, off until named), with an aim: 'unit' | 'floor' | 'stack' | 'both' | 'off'.
+// Units are marked with where they are: data-floor(s), data-position(s), data-section, data-entrance —
+// all the flats of the 5th floor: house.svg.querySelectorAll('[data-floors~="5"]'). Everything else is events.
+// A handler gets the same chain of levels as a plugin (each {config, box}) + house, element and event:
+//   {type, house, section, entrance, floor, unit, element, event}
+// What happens next is for the one who listens: a card, classes on elements, a dialog of your own…
+const residents = {5: 'M. Johnson', 14: 'O. Peterson', 27: 'G. Sidorenko'};
+
+export default {floors: 9, units: 4, entrances: 2, hover: {aim: 'both'}};      // hover: {stroke: 'tomato', line: {fill: '#fff3e0'}}
+
+export function setup(house, {log, panel}) {
+    house.on('unit:enter', ({unit}) => {
+        const {label, id, path} = unit.config;
+        panel.hidden = false;
+        panel.innerHTML = '<b>Flat ' + label + '</b><br>'
+            + 'entrance ' + path.entrance + ', floor ' + path.floor + ', position ' + path.position + '<br>'
+            + (residents[id] || '<i>no resident given</i>');
+    });
+    house.on('unit:leave', () => panel.hidden = true);
+
+    house.on('unit:click', ({unit, element}) => {
+        element.classList.toggle('selected');
+        log('click: flat ' + unit.config.id + (element.classList.contains('selected') ? ' selected' : ' unselected'));
+    });
+}
+`
+    },
+    {
+        name: 'A hole in the house: null and the hole plugin',
+        code: `import {House, hole} from 'easy-house';
+
+// A house of 7 floors with 4 flats on each.
+// 10: null — a hole: there is nothing where 10 was, the number 10 is not used, the others do not move.
+// 18: {hole: true} — the hole plugin (the key is its name): the flat is there — its number, data, events —
+// but a hole in the house in its place. Its options by the same name: hole: {…} on the house, 23: {hole: {…}} at a flat.
+export default {
+    units: 4,
+    floors: {
+        to: 7,
+        3: {10: null},
+        5: {18: {hole: true, title: 'destroyed'}},
+        6: {23: {hole: {note: '2022'}}}
+    },
+    plugins: [...House.plugins, hole]
+};
+
+// events — the same names as in house.on, in the DOM with the prefix house:
+export function setup(house, {log, panel}) {
+    house.element.addEventListener('house:unit:enter', ({detail: {unit}}) => {
+        panel.hidden = false;
+        panel.innerHTML = 'Flat <b>' + unit.config.label + '</b>'
+            + (unit.config.hole ? ' — a hole in the house' : '') + (unit.config.title ? '<br>' + unit.config.title : '');
+    });
+    house.element.addEventListener('house:unit:leave', () => panel.hidden = true);
+    house.on('unit:click', ({unit}) => log('unit:click → ' + unit.config.id + (unit.config.hole ? ' (a hole in the house)' : '')));
+}
+`
+    },
+    {
+        name: 'Your own render: flat → kind → unit',
+        code: `// render is an ordinary field of a unit: in kinds.flat, in a kind, and at the unit itself.
+// They wrap each other like layers: the most specific one is called, its base(patch) is the next, more general one, down to the square.
+// patch changes the ctx for what is below: base({style: {fill: 'pink'}}), base({unit: {config: {label: '★'}}}).
+// Not calling base — drawing everything yourself.
+const tinted = color => ({base}) => base({style: {fill: color}});
+
+const round = ({unit}) => [
+    {tag: 'circle', opt: {cx: unit.box.x + unit.box.width / 2, cy: unit.box.y + unit.box.height / 2, r: unit.box.width / 2, fill: 'plum'}},
+    {tag: 'text', val: unit.config.label, opt: {
+        x: unit.box.x + unit.box.width / 2, y: unit.box.y + unit.box.height / 2, fill: 'white',
+        'font-family': 'arial', 'text-anchor': 'middle', 'dominant-baseline': 'central'
+    }}
+];
+
+export default {
+    units: 5,
+    kinds: {
+        // every flat: numbers ending in 7 in red
+        flat: {render: ({unit, base}) => base(String(unit.config.label).endsWith('7') ? {style: {color: 'crimson'}} : {})},
+        salon: {label: 'S', title: 'Beauty salon', render: tinted('pink')},
+        concierge: {label: 'C', title: 'Concierge', render: round}
+    },
+    floors: {
+        to: 6,
+        1: {'@4': {kind: 'salon'}, '@5': {kind: 'concierge'}},
+        6: {26: {render: tinted('lightyellow')}}    // its own at the flat 26 — over flat
+    }
+};
+`
+    },
+    {
+        name: 'Squares only',
+        code: `import {cells} from 'easy-house';
+
+// A list of plugins of your own instead of House.plugins: only the squares, without numbers
+export default {
+    units: 5,
+    floors: {to: 22, 22: 3},
+    plugins: [cells],
+    cells: {numbers: false}
+};
+`
+    }
+];
+
+/** The full config with every default, built from the code itself — so it never goes stale. */
+function fullConfig() {
+    const block = object => print(object, 1);
+    return `import {House, cells, stacks, walls, floorLabels, dividers, reactions, text, roof, hover} from 'easy-house';
+
+// Everything that can be written now, with its default — built from the code, so it never goes stale.
+// Any key may be written on the house, a section or an entrance; a lower one overrides the one above.
+// Not inherited down: sections, entrances, start, render.
+export default {
+    // ---- structure
+    sections: 1,                // a number or [{…}, {…}] — each section with keys of its own
+    entrances: 1,               // a number or [{…}, …]
+    floors: {from: 1, to: 5},   // or just 5; a key that is a floor number — how that floor differs (see below)
+    units: 4,                   // units (positions) on a floor
+    align: 'left',              // 'right' — a short floor counts its positions from the right edge
+    base: 0,                    // lift (1) or lower (-1) a section: a slope
+    groundFloor: 1,             // the number of the ground floor: 1 (UA, US) or 0 (EU); below it — underground
+    direction: 'ltr',           // 'rtl' — entrances and sections right to left, and the numbers on a floor too
+    // numberDirection: 'rtl',  // the numbers on a floor alone; by default as direction; on a floor — a snake
+    // render: ({house, section, base}) => …,   // on a section / an entrance / a floor — draw it yourself
+
+    // ---- numbering
+    start: 1,                   // where to start (a house, a section, an entrance, a floor)
+    numericStrings: false,      // '25/1' moves the counter to 25 instead of one step
+
+    // ---- kinds of units: presets of fields, like CSS classes (flat is the base of all)
+    kinds: ${block(defaultKinds)},
+
+    // ---- colours and themes: theme: 'dark' | 'night'; colors: {unit: 'ivory', …} — the palette by name;
+    //      any colour option may name one: fill: '$yesFill'; background: null — transparent
+    // theme: 'light',
+    // colors: {${Object.keys(colors).join(', ')}},
+
+    // ---- geometry
+${Object.entries(defaultGeometry).map(([key, value]) => `    ${key}: ${value},` + (key === 'size' ? `           // or one word — a small house: ${Object.keys(sizes).slice(0, 8).map(word => `'${word}'`).join(', ')}` : '')).join('\n')}
+
+    // ---- plugins (their order is the order of layers) and their options: config.<name>; null instead of options switches one off.
+    // Options by the same name may be written lower too — on a section, a floor, a flat: cells: {fill: 'pink'} on a floor.
+    // One plugin under another name: {use: icon, name: 'oldman', options: {icon: '👴🏻'}}.
+    // Also in the box: icon (a mark in a corner), hole (a flat is there, with a hole in its place).
+    // How a unit looks (fill, stroke, color…) — the options of cells, and over them plugins with a style hook (reactions).
+    plugins: [cells, stacks, walls, floorLabels, dividers, reactions, text, roof, hover],     // = House.plugins
+    cells: ${block(cells.options)},
+    // stacks: true,            // stacks: off until named; their colours — the palette's $stacks, or stacks: {colors: ['#ff9aa2', …]}
+    floorLabels: ${block(floorLabels.options)},
+    dividers: ${block(dividers.options)},
+    reactions: ${block(reactions.options)},
+    // walls: true,             // the body of a section behind its units: off until named; or {color: '$wall', padding: 3}
+    // off until named: text — a text block, roof — a strip over every entrance, hover — a highlight under the pointer
+    // text: {${Object.keys(text.options).join(', ')}},
+    // roof: true,              // or ${inline(roof.options)} — color: null is the colour of the walls
+    // hover: true,              // or ${inline(hover.options)}
+    // the percent and the legend are of reactions: reactions: {percent: true, legend: true}
+};
+
+// The state is apart from the config: export const state = {57: {reaction: 'yes'}} (here) or new House(target, config, state);
+// then house.update({57: {reaction: 'no'}}) — only 57 is redrawn.
+
+// The value of a floor in floors:
+//   22: 3                              — how many positions are taken
+//   12: {'@1': null, 54: {title: '…'}}  — only what differs, the rest as usual:
+//         '@1' — a position: structure (a hole, a kind, a span, an explicit number) — changes the numbering;
+//         54   — the number of a flat, as you see it: its data (title, render, fields of plugins)
+//   1: [1, 2, 3, 'S', 'C']             — the whole row, explicitly; the tail is empty
+//   1: {units: [1, 2, 3, 'S', 'C'], mark: 'done'}  — the same, and fields of the floor beside it
+//   0: null                            — no units on this floor
+//   fields of a floor: {units, align, start, render, label: 'P', mark: 'done', numberDirection, …fields of plugins}
+//
+// A unit (a slot): null — a hole; 57 — a number; '25/1' — a number as a string; 'S' — a label;
+//   {label, kind, enumerable, id, title, colSpan, rowSpan, merged, render, …fields of plugins by their names}
+// In a floor object by number: 54: {…} — the data of the flat; 54: {rowSpan: 2} — a duplex up;
+//   54: null — a hole in its place (the number is not used).
+`;
+}
+
+// a JS literal on one line, for a comment
+function inline(value) {
+    if (value === null || typeof value !== 'object') return print(value);
+    if (Array.isArray(value)) return `[${value.map(inline).join(', ')}]`;
+    return `{${Object.entries(value).map(([key, item]) => `${key}: ${inline(item)}`).join(', ')}}`;
+}
+
+// a JS literal with functions as their source
+function print(value, depth = 0) {
+    const pad = '    '.repeat(depth);
+    if (typeof value === 'function') return value.toString();
+    if (typeof value === 'string') return `'${value}'`;
+    if (value === null || typeof value !== 'object') return String(value);
+
+    const entries = Object.entries(value).map(([key, item]) => `${pad}    ${key}: ${print(item, depth + 1)}`);
+    return entries.length ? `{\n${entries.join(',\n')}\n${pad}}` : '{}';
+}
