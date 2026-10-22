@@ -46,7 +46,7 @@ Without a bundler, an import map keeps the same import:
     {
         "imports": {
             "easy-house": "https://unpkg.com/easy-house@1.0.0/index.js",
-            "svg-easy-tree": "https://unpkg.com/svg-easy-tree@1.0.3/tree.js"
+            "svg-easy-tree": "https://unpkg.com/svg-easy-tree@1.0.4/tree.js"
         }
     }
 </script>
