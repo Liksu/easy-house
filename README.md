@@ -4,7 +4,10 @@ Draws an apartment building in SVG: every flat is a square, placed where it is i
 a housing association — to show on one picture who voted for a decision, who has paid, which flats are rented out,
 and to open the card of a flat when it is clicked.
 
-![A house of three sections: votes on the flats, the percent above and the legend under it](docs/house.svg)
+<picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/Liksu/easy-house/main/docs/house-night.svg">
+    <img alt="Kyiv, Khreshchatyk 23–27: the House with a star and its neighbours, the flats by a vote" src="https://raw.githubusercontent.com/Liksu/easy-house/main/docs/house.svg">
+</picture>
 
 You describe an ordinary floor once and then only where the house differs from it: sections of different height,
 several entrances, a shorter top floor, duplexes, an arch, a slope, floors below the ground, numbers that skip or
@@ -45,8 +48,8 @@ Without a bundler, an import map keeps the same import:
 <script type="importmap">
     {
         "imports": {
-            "easy-house": "https://unpkg.com/easy-house@1.0.1/index.js",
-            "svg-easy-tree": "https://unpkg.com/svg-easy-tree@1.0.4/tree.js"
+            "easy-house": "https://unpkg.com/easy-house@latest/index.js",
+            "svg-easy-tree": "https://unpkg.com/svg-easy-tree@latest/tree.js"
         }
     }
 </script>

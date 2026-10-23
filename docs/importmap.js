@@ -1,14 +1,14 @@
 // Where the pages of these docs take the library from. Examples import it by its package name —
 // `import {House} from 'easy-house'` — so the code on the page is the code you write; this import map
 // says what the name is:
-//   on the published site — the package from unpkg, the version below;
+//   on the published site — the latest published package from unpkg;
 //   served from the repository (localhost) — the sources next to the docs, as they are right now.
 // ?lib=cdn or ?lib=local in the address picks one by hand.
 //
 // A classic script, loaded before any module: it writes the import map while the page is being parsed.
 (function () {
-    var version = '1.0.1';           // the published easy-house; keep in step with package.json
-    var tree = '1.0.4';              // svg-easy-tree, its only dependency
+    var version = 'latest';          // the published easy-house
+    var tree = 'latest';             // svg-easy-tree, its only dependency
 
     var choice = new URLSearchParams(location.search).get('lib');
     var local = choice ? choice === 'local' : /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname);
