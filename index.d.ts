@@ -328,7 +328,10 @@ export interface TextBlockOptions {
     /** px from the near edge of the place, negative — from the far one; '50%' — of its size */
     x: number | string;
     y: number | string;
+    /** how the lines align, and which side of the block x is */
     align: 'left' | 'center' | 'right';
+    /** which side of the block x is, when not the side of align: align: 'left', x: '100%', anchor: 'right' */
+    anchor: 'left' | 'center' | 'right' | null;
     valign: 'top' | 'middle' | 'bottom';
     color: Color;
     font: string;
@@ -778,6 +781,8 @@ export class House {
     off(type: HouseEventType, handler: (event: HouseEvent) => void): this;
     /** calls the handlers and dispatches `house:<type>` on the container */
     emit(type: string, detail: unknown): void;
+    /** puts text blocks anchored by another side than their lines exactly, by their real width in the page */
+    settle(): this;
 }
 
 

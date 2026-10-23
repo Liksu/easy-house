@@ -23,7 +23,8 @@ export const defaults = {
     at: 'house',
     x: 0,
     y: 0,
-    align: 'left',          // left | center | right
+    align: 'left',          // left | center | right — how the lines align, and which side of the block x is
+    anchor: null,           // which side of the block x is, when not the side of align: left | center | right
     valign: 'top',          // top | middle | bottom
     color: '$text',
     font: 'arial, sans-serif',
@@ -98,30 +99,36 @@ export function block(written, options, {house, bands = [], name = 'text'}) {
     const height = written.length * step;
     const first = {top: y, middle: y - height / 2, bottom: y - height}[options.valign] ?? y;
     const anchor = {left: 'start', center: 'middle', right: 'end'}[options.align] ?? 'start';
+    // the block stands by `anchor` at x, its lines align by `align` inside it. The width is estimated here (measure);
+    // in the page House puts such a block exactly by its real width — data-anchor and data-x tell it where
+    const {width} = measure(written, options, geometry);
+    const share = side => ({center: 0.5, right: 1})[side] ?? 0;
+    const left = x - width * share(options.anchor ?? options.align);
+    const anchored = options.anchor && options.anchor !== options.align;
+    const lineX = anchored ? left + width * share(options.align) : x;
 
     const text = {
         tag: 'text',
         opt: {
             class: `text ${name}`,
-            x,
+            x: lineX,
             'text-anchor': anchor,
             'dominant-baseline': 'central',
             fill: options.color,
             'font-family': options.font,
             'font-size': size,
             ...(options.weight && {'font-weight': options.weight}),
+            ...(anchored && {'data-anchor': options.anchor, 'data-x': x}),
             style: 'white-space: pre'
         },
         sub: written.map((parts, i) => ({
             tag: 'tspan',
-            opt: {x, y: first + step * (i + 0.5)},
+            opt: {x: lineX, y: first + step * (i + 0.5)},
             sub: parts.map(part => ({tag: 'tspan', val: escape(part.value), opt: look(part)}))
         }))
     };
     if (!options.border) return [text];
 
-    const {width} = measure(written, options, geometry);
-    const left = {start: x, middle: x - width / 2, end: x - width}[anchor];
     return [frame(options.border, {
         x: left - options.padding,
         y: first - options.padding,

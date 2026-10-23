@@ -47,7 +47,7 @@ keeps the same import:
 <script type="importmap">
     {
         "imports": {
-            "easy-house": "https://unpkg.com/easy-house@1.0.0/index.js",
+            "easy-house": "https://unpkg.com/easy-house@1.0.1/index.js",
             "svg-easy-tree": "https://unpkg.com/svg-easy-tree@1.0.4/tree.js"
         }
     }

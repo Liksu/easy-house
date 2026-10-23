@@ -1,7 +1,7 @@
 # roof
 
-A roof over every entrance: a thin strip above its top floor, from the middle of its first column to the middle of
-its last one. Off until named: `roof: true`.
+A roof over every entrance: a thin strip above its top floor, from the middle of the first unit there to the middle
+of the last one, so a tower gets a roof of its own width. Off until named: `roof: true`.
 
 | Option | Default | |
 |---|---|---|

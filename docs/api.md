@@ -26,6 +26,7 @@ new House(config, state);              // draws into nothing: put house.svg wher
 | `unit(id)` | the chain of levels of a unit — `{section, entrance, floor, unit}`, each `{config, box}`, the unit with `state` — as an event handler gets it |
 | `elementOf(id)` | the `<g class="unit">` of a unit |
 | `emit(type, detail)` | calls the handlers of `type` and dispatches `house:<type>` on the container |
+| `settle()` | puts the [text blocks](plugins/text.md) that stand by another side than their lines exactly, by their width in the page; `draw` and `update` do it themselves, a house drawn into nothing — after it is put into the page |
 
 ### Properties
 

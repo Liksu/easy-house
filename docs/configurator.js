@@ -189,6 +189,7 @@
             const config = configOf(effective);
             const state = stateOf(effective);
             stage.innerHTML = '';
+            stage.classList.toggle('dark', effective.theme !== 'light');
             try {
                 new House(stage, config, state || {});
             } catch (error) {

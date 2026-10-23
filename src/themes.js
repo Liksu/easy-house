@@ -39,10 +39,11 @@ export const themes = {
     },
 
     // the house at night: dark walls and windows, and the windows of the flats with a reaction lit with a warm
-    // light — `yes` bright, `maybe` dim, the others dark
+    // light — `yes` bright, `maybe` dim, the others dark. No background of its own: it stands on a dark page, and on a
+    // light one is given a background — {theme: 'night', background: '#1b1f27'}
     night: {
         colors: {
-            background: '#1b1f27',
+            background: null,
             unit: '#262b35',
             label: '#4d5566',
             wall: '#383e4b',

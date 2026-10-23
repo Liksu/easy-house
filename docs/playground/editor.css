@@ -172,6 +172,17 @@ body.workbench-page {
     height: auto;
 }
 
+/* the same room around the house in both looks, so switching to dark moves and resizes nothing */
+.stage {
+    padding: 12px;
+    border-radius: 6px;
+}
+
+/* a house in a dark theme — by the dark switch or by its config — stands on a dark page */
+.stage.dark {
+    background: #0d1117;
+}
+
 .log {
     background: #f6f8fa;
     padding: 8px 12px;

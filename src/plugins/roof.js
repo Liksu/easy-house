@@ -1,5 +1,6 @@
-// A roof over every entrance: a thin strip above its top floor, from the middle of its first column to the middle
-// of its last one. Off until named: `roof: true`; switched off on a section or an entrance — no roof there.
+// A roof over every entrance: a thin strip above its top floor, from the middle of the first unit there to the middle
+// of the last one — a tower gets a roof of its own width. Off until named: `roof: true`; switched off on a section or an
+// entrance — no roof there.
 // Its colour is the colour of the walls there (`walls: {color}`, or the palette's `wall`) unless it has its own.
 //
 // Room is taken above the house only as much as the roofs of the tallest entrances need: a lower entrance has its
@@ -32,11 +33,15 @@ export default {
     entrance({entrance, house, options}) {
         const {box} = entrance;
         const {size, gap} = house.layout.geometry;
-        const width = box.width - size;
-        if (!box.height || width <= 0) return null;
+        // the units of the top floor: a duplex from the floor under it reaches it too
+        const top = entrance.floors.flatMap(floor => floor.units).filter(unit => unit.box.y === box.y).map(unit => unit.box);
+        if (!top.length) return null;
+        const left = Math.min(...top.map(unit => unit.x));
+        const width = Math.max(...top.map(unit => unit.x + unit.width)) - left - size;
+        if (width <= 0) return null;
         return {tag: 'rect', opt: {
             class: 'roof',
-            x: box.x + size / 2,
+            x: left + size / 2,
             y: box.y - (options.offset ?? gap) - options.height,
             width,
             height: options.height,

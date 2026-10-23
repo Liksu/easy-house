@@ -136,6 +136,7 @@ function remember() {
 const renamed = [[/\brisers\s*:/, 'risers is stacks now: stacks: true']];
 
 $('fit').addEventListener('change', event => $('stage').classList.toggle('fit', event.target.checked));
+$('dark').addEventListener('change', run);
 $('debug').addEventListener('change', event => {
     $('model').hidden = !event.target.checked;
     if (event.target.checked && window.house) showModel(window.house);
@@ -167,7 +168,8 @@ async function run() {
         panel.hidden = true;
         panel.innerHTML = '';
 
-        const house = new House(stage, config, module.state);
+        // dark: forced over the config — theme: 'dark', or what the preset says dark is for it (export const dark)
+        const house = new House(stage, $('dark').checked ? {...config, ...(module.dark ?? {theme: 'dark'})} : config, module.state);
         window.house = house;
         module.setup?.(house, {
             panel,
@@ -178,6 +180,7 @@ async function run() {
             }
         });
 
+        stage.classList.toggle('dark', (house.effective.theme ?? 'light') !== 'light');
         errors.hidden = true;
         showInfo(house);
         if (!$('model').hidden) showModel(house);

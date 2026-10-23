@@ -46,7 +46,7 @@ colours. What your config says itself wins: `{theme: 'dark', colors: {unit: '#33
 |---|---|
 | `light` | the default |
 | `dark` | the same house, readable on a dark page |
-| `night` | the house at night: dark walls and windows; the windows of the flats that said yes are lit with a warm light, those that said maybe are dim |
+| `night` | the house at night: dark walls and windows; the windows of the flats that said yes are lit with a warm light, those that said maybe are dim. No background of its own: it is for a dark page; on a light one give it a background — `background: '#1b1f27'` |
 
 <div id="demo-themes" class="demo-row"></div>
 
@@ -56,6 +56,7 @@ import {House} from 'easy-house';
 const state = {1: {reaction: 'yes'}, 2: {reaction: 'no'}, 6: {reaction: 'maybe'}, 7: {reaction: 'yes'}, 11: {reaction: 'yes'}};
 for (const theme of ['light', 'dark', 'night']) {
     const figure = document.querySelector('#demo-themes').appendChild(document.createElement('figure'));
+    if (theme === 'night') figure.className = 'on-night';       // a dark page under the night
     new House(figure.appendChild(document.createElement('div')), {units: 4, floors: 4, theme, stacks: theme === 'dark'}, state);
     figure.appendChild(document.createElement('figcaption')).textContent = theme;
 }
@@ -66,7 +67,7 @@ for (const theme of ['light', 'dark', 'night']) {
 At night a flat is a window: the [walls](plugins/walls.md) give the house its body, the windows are dark, and a
 reaction lights one — `yes` brightly, with a glow, `maybe` dimly. Click a window to light it or to turn the light off:
 
-<div id="demo-night" class="demo"></div>
+<div id="demo-night" class="demo on-night"></div>
 
 ```js live
 import {House} from 'easy-house';

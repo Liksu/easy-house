@@ -7,7 +7,7 @@
 //
 // A classic script, loaded before any module: it writes the import map while the page is being parsed.
 (function () {
-    var version = '1.0.0';           // the published easy-house; keep in step with package.json
+    var version = '1.0.1';           // the published easy-house; keep in step with package.json
     var tree = '1.0.4';              // svg-easy-tree, its only dependency
 
     var choice = new URLSearchParams(location.search).get('lib');

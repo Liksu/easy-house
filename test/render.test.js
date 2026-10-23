@@ -470,6 +470,12 @@ test('text block: general — lines and parts at a place of the house, a border;
     const ys = block.sub.map(line => line.opt.y);
     assert.ok(Math.abs((ys[0] + ys[1]) / 2 - (row.y + row.height / 2)) < 0.01);       // around the middle of the row
 
+    // lines aligned left, the block by the right edge: x is its right side, the lines start a width before it
+    const anchored = byClass(drawWithState({units: 3, floors: 3, text: {at: 'floor:3', x: '100%', align: 'left', anchor: 'right',
+        size: 10, text: ['Kyiv', 'Khreshchatyk 25']}}, [cells, text]).svg, 'text')[0];
+    const width = Math.ceil('Khreshchatyk 25'.length * 10 * 0.6);
+    assert.deepEqual([anchored.opt.x, anchored.opt['text-anchor'], anchored.sub[0].opt.x], [row.x + row.width - width, 'start', row.x + row.width - width]);
+
     assert.equal(byClass(drawWithState({units: 3, floors: 3}, [cells, text]).svg, 'text').length, 0);
     // at the top it takes a band of its own: the house moves down
     const banded = drawWithState({units: 3, floors: 3, text: {at: 'top', text: ['title']}}, [cells, text]);
@@ -711,4 +717,26 @@ test('walls: the picture keeps room for them at its edges, counting the room the
     assert.equal(labelled.geometry.units[0].box.x, plain.geometry.units[0].box.x);
     assert.equal(labelled.geometry.units[0].box.y, plain.geometry.units[0].box.y);
     assert.equal(labelled.geometry.width, plain.geometry.width + 3);    // on the right: 4 - padding 1
+});
+
+test('walls follow every floor, a roof covers its top floor: a tower is narrower than the house under it', () => {
+    const plugins = [cells, walls, roof];
+    const config = {units: 4, floors: {to: 4, 4: {units: 0, '@2': {colSpan: 2}}}, walls: true, roof: true};
+    const {svg, geometry} = drawWithState(config, plugins);
+    const tower = geometry.units.find(({cell}) => cell.floor === 4).box;
+
+    // two rects: the tower and the floors under it, meeting in the middle of the gap
+    const [top, body] = byClass(svg, 'wall').map(node => node.opt);
+    assert.deepEqual([top.x, top.y, top.width], [tower.x - 3, tower.y - 3, tower.width + 6]);
+    assert.equal(top.y + top.height, body.y);
+    assert.equal(body.width, 4 * 41 - 6 + 6);
+    assert.equal(byClass(svg, 'wall').length, 2);
+
+    // the roof is over the tower, from the middle of its first column to the middle of its last
+    const [strip] = byClass(svg, 'roof').map(node => node.opt);
+    assert.deepEqual([strip.x, strip.width], [tower.x + 35 / 2, tower.width - 35]);
+
+    // walls: null on a section — no wall there
+    const two = drawWithState({units: 2, floors: 2, sections: [{}, {walls: null}], walls: true}, plugins).svg;
+    assert.deepEqual(byClass(two, 'section').map(section => byClass(section, 'wall').length), [1, 0]);
 });

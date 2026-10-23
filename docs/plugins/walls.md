@@ -8,9 +8,10 @@ grid of squares. The [night theme](../themes.md#night) turns it on. Off until na
 | `color` | `'$wall'` | the colour of a wall: the palette's `wall` |
 | `padding` | `null` | px around the units; by default half a gap |
 
-A wall covers the units of a section, with the gaps between its entrances; under an arch there is no wall — the
-section starts higher. The picture keeps room for the padding at its edges, so a wall is never cut there. A
-[roof](roof.md) takes the colour of the walls.
+A wall follows the units of every floor: from the first unit on a floor to the last, over the gaps between the
+entrances, so a short top floor or a tower is narrower than the floors under it. Under an arch there is no wall — the
+section starts higher; `walls: null` on a section leaves it without one. The picture keeps room for the padding at its
+edges, so a wall is never cut there. A [roof](roof.md) takes the colour of the walls.
 
 <div id="demo-walls" class="demo"></div>
 

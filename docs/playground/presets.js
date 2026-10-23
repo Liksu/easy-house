@@ -1,12 +1,128 @@
 // Built-in presets of the playground. Each is an ES module as text: `export default` is the house config,
 // an optional `export const state` is the state of the units (by id), an optional `export function setup(house, {log, panel})`
-// runs after drawing. Bare imports go through the import map.
+// runs after drawing, an optional `export const dark` is what the dark switch puts over the config (theme: 'dark' if
+// there is none). Bare imports go through the import map.
 import {defaultGeometry, defaultKinds, sizes, colors, cells, floorLabels, dividers, reactions, stacks, text, roof, hover} from 'easy-house';
 
 export const presets = [
     {
         name: 'Every option (the defaults)',
         code: fullConfig()
+    },
+    {
+        name: 'Kyiv: Khreshchatyk 23–27, the House with a star',
+        code: `// the flag over the tower, drawn by the unit itself: emoji flags are not drawn on Windows
+const flag = ({unit: {box}}) => {
+    const width = box.width * 0.32, height = width * 2 / 3;
+    const x = box.x + (box.width - width) / 2, y = box.y + (box.height - height) / 2;
+    return [
+        {tag: 'rect', opt: {x, y, width, height: height / 2, fill: '#0057b7'}},
+        {tag: 'rect', opt: {x, y: y + height / 2, width, height: height / 2, fill: '#ffd700'}}
+    ];
+};
+
+// Kyiv, Khreshchatyk 23–27 — the ensemble around "the House with a star" (No. 25, 1954; architects A. Dobrovolskyi,
+// O. Malynovskyi, P. Petrushenko). No. 25 has three sections: a 14-storey centre with a tower and a spire with a star,
+// the tallest house of Kyiv until 1981, and two 9-storey wings. On its ground floor was the Druzhba cinema
+// (1956–2012): two halls, the Green and the Red, 100 seats each. Nos. 23 and 27 stand at the sides, 11 storeys each.
+// From the descriptions: the houses, their floors, the tower and the cinema. Not found anywhere, so assumed:
+// 4 flats on a floor, one entrance a section, shops on the ground floors, as all along Khreshchatyk.
+// Switch on dark (next to fit) for the night: the windows of those who said yes are lit, of those who said maybe —
+// dimly. Click a window to light it.
+export default {
+    units: 4,
+    kinds: {
+        // shop windows and the sign of the cinema have a light of their own, whatever the vote
+        shop: {enumerable: false, label: '', title: 'shops', reactions: null, cells: {fill: '$maybeFill'}},
+        cinema: {
+            enumerable: false, label: 'Druzhba', title: 'The Druzhba cinema, 1956–2012: two halls, the Green and the Red',
+            reactions: null, cells: {color: '#e8b64c', glow: '$glow', fontWeight: 'bold'}
+        },
+        tower: {enumerable: false, label: '', title: 'the tower'}
+    },
+    floors: {1: [{kind: 'shop', colSpan: 4}]},                     // shops on the ground floor of every house
+    sections: [
+        {floors: 11},                                               // Khreshchatyk 23
+        {floors: 9},                                                // No. 25: the left wing
+        {                                                           //         the centre
+            floors: {
+                to: 16,
+                1: [{kind: 'cinema', colSpan: 4}],
+                15: {units: 0, label: '', '@2': {kind: 'tower', colSpan: 2}},
+                16: {units: 0, label: '', '@2': {kind: 'tower', colSpan: 2, title: 'the flag', render: flag}}
+            },
+            roof: null
+        },
+        {floors: 9},                                                //         the right wing
+        {floors: 11}                                                // Khreshchatyk 27
+    ],
+    walls: true,
+    roof: true,
+    hover: true,
+    // the lines aligned left, the block by the right edge of the house
+    text: {x: '100%', anchor: 'right', text: ['Kyiv', 'Khreshchatyk 23–27']}
+};
+
+// what the dark switch puts over the config: the night
+export const dark = {theme: 'night'};
+
+// a vote: about four in ten said yes, one in ten maybe, one in ten no — the same every time
+const random = id => Math.abs(Math.sin(id * 12.9898) * 43758.5453) % 1;
+export const state = {};
+for (let id = 1; id <= 196; id++) {
+    const r = random(id);
+    const reaction = r < 0.4 ? 'yes' : r < 0.5 ? 'maybe' : r < 0.6 ? 'no' : null;
+    if (reaction) state[id] = {reaction};
+}
+
+export function setup(house) {
+    house.on('unit:click', ({unit}) => house.update({[unit.config.id]: unit.state.reaction === 'yes' ? null : {reaction: 'yes'}}));
+}
+`
+    },
+    {
+        name: 'Kyiv: the daisies of Obolon',
+        code: `// Kyiv, Obolonska square 2 and 2-a — the "daisies" (or "corn"): two round towers with semicircular balconies,
+// an experiment of the microdistrict No. 2. Both stand on a stylobate two storeys high, a little narrower than
+// the tower and surrounded by columns.
+// The first, 1981: the first monolithic house of Kyiv, its floors lifted along a concrete core. Two technical floors
+// below, 15 floors of flats, 6 flats a floor — 90 flats.
+// The second, 1990: slip-formed, the tallest house of Kyiv then. In the stylobate — the entrance and the hall; over
+// the hall a technical floor, then 20 floors of flats, 6 a floor — 120 flats, and a technical floor under the roof.
+// (The source says 22 floors; its parts add up to 24.)
+// Two houses, each numbered from 1: the keys are house-flat — '2-17'.
+export default {
+    units: 6,
+    size: 30,
+    kinds: {
+        technical: {enumerable: false, label: '', title: 'a technical floor'},
+        stylobate: {enumerable: false, label: '', title: 'the stylobate'},
+        hall: {enumerable: false, label: 'hall', title: 'the entrance and the hall'}
+    },
+    sections: [
+        {
+            floors: {
+                to: 17,
+                1: {units: 0, '@2': {kind: 'technical', colSpan: 4}},        // the stylobate: narrower, columns around
+                2: {units: 0, '@2': {kind: 'technical', colSpan: 4}}
+            }
+        },
+        {
+            start: 1,
+            floors: {
+                to: 24,
+                1: {units: 0, '@2': {kind: 'hall', colSpan: 4}},
+                2: {units: 0, '@2': {kind: 'stylobate', colSpan: 4}},
+                3: [{kind: 'technical', colSpan: 6}],
+                24: [{kind: 'technical', colSpan: 6}]
+            }
+        }
+    ],
+    walls: true,
+    hover: true,
+    text: {text: ['Kyiv', 'Obolonska square 2, 2-a']}         // the address, at the top left
+};
+`
     },
     {
         name: 'A tall house: a salon and a concierge',

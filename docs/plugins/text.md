@@ -7,7 +7,8 @@ about what they mean. Off until named: `text: {…}`.
 |---|---|---|
 | `at` | `'house'` | `'house'`, `'section:2'`, `'floor:7'` (its row across the house), or `'top'` / `'bottom'` — a band of its own above or below the house |
 | `x`, `y` | `0` | inside that place: px from the near edge, negative — from the far edge, `'50%'` — of its size |
-| `align` | `'left'` | `left`, `center`, `right` — which side of the text `x` is |
+| `align` | `'left'` | `left`, `center`, `right` — how the lines align, and which side of the block `x` is |
+| `anchor` | `null` | which side of the block `x` is, when not the side the lines align to: `align: 'left', x: '100%', anchor: 'right'` — lines aligned left, the block at the right edge. In the page it stands exactly; without the DOM its width is estimated |
 | `valign` | `'top'` | `top`, `middle`, `bottom` — which side `y` is |
 | `color` | `'#333'` | |
 | `font` | `'arial, sans-serif'` | |

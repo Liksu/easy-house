@@ -59,11 +59,30 @@
     gap: 0.75rem;
 }
 
-/* Opt-in backdrops for houses drawn in light colours. */
+/* Opt-in backdrops: for houses drawn in light colours, and for the night, which has no background of its own. */
 .demo.on-dark,
-.demo-row.on-dark {
+.demo-row.on-dark,
+.demo-row figure.on-dark {
     background: #2c3e50;
     border-radius: 4px;
+}
+
+.demo-row figure.on-dark {
+    padding: 0.5rem;
+}
+
+.demo.on-night,
+.demo-row figure.on-night {
+    background: #1b1f27;
+    border-radius: 4px;
+}
+
+.demo-row figure.on-night {
+    padding: 0.5rem;
+}
+
+.demo-row figure.on-night figcaption {
+    color: #8b949e;
 }
 
 .demo.on-silver,
@@ -167,6 +186,11 @@ pre.is-editing code {
 
 .configurator-stage > svg {
     margin: auto;
+}
+
+/* a house in a dark theme: the night has no background of its own */
+.configurator-stage.dark {
+    background: #0d1117;
 }
 
 .configurator-controls {

@@ -55,6 +55,7 @@ export default class House {
         else if (this.element) this.element.appendChild(this.svg);
         this.index();
         this.listen();
+        this.settle();
 
         if (this.model.warnings.length) console.warn('easy-house:', ...this.model.warnings);
         return this;
@@ -91,6 +92,23 @@ export default class House {
             this.listen();
         }
         this.index();
+        this.settle();
+        return this;
+    }
+
+    /**
+     * Text blocks standing by another side than their lines align to (text: {align: 'left', anchor: 'right'}):
+     * the scene has only an estimate of their width, the page knows it — each is moved to stand exactly at its x.
+     * Only in the page: a house drawn into nothing keeps the estimate until it is drawn again.
+     */
+    settle() {
+        if (!this.svg.isConnected) return this;
+        for (const text of this.svg.querySelectorAll('text[data-anchor]')) {
+            const box = text.getBBox();
+            const share = {center: 0.5, right: 1}[text.dataset.anchor] ?? 0;
+            const shift = Number(text.dataset.x) - (box.x + box.width * share);
+            for (const node of [text, ...text.children]) node.setAttribute('x', Number(node.getAttribute('x')) + shift);
+        }
         return this;
     }
 
