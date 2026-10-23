@@ -38,7 +38,7 @@ const wrong: HouseConfig = {size: 'huge'};
 // @ts-expect-error: floor labels at a place they do not go
 const nowhere: HouseConfig = {floorLabels: {at: 'roof'}};
 
-const state: State = {57: {reaction: 'yes'}, '2-5': {reaction: 'no', debt: 120}};
+const state: State = {57: {reaction: 'yes'}, 's2-5': {reaction: 'no', debt: 120}};
 const house = new House('#house', config, state);
 const alone = new House({units: 4, floors: 9});
 alone.svg.getBBox();
@@ -54,7 +54,8 @@ house.on('unit:click', ({unit, floor, element, event}) => {
 house.update({57: {reaction: 'no'}, 58: null}).redraw({stacks: false});
 const tally = count(house);
 if (tally) console.log(tally.total, tally.groups.map(group => group.percent));
-house.unit('2-5')?.unit.box.width;
+house.unit('s2-5')?.unit.box.width;
+new House({units: 2, floors: 1, sections: [{}, {start: 1}], keys: 'section'});
 
 // a plugin of your own
 const stairs: Plugin<{color: string; every: number}> = {

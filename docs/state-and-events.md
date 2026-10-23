@@ -5,7 +5,7 @@
 The config describes the building. Data about the flats — how a resident voted, whether a flat has paid, a
 debt — is kept separately, in the **state**: an object keyed by the flat number, `{57: {reaction: 'yes', debt: 120}}`.
 (The key is the flat's `id`: its number, or — where the numbering starts again — the number with what tells it
-apart, `'2-5'`; see [Numbering](numbering.md#ids).) Plugins read a flat's data as `unit.state`.
+apart, `'s2-5'`; see [Numbering](numbering.md#ids).) Plugins read a flat's data as `unit.state`.
 
 ```js
 const house = new House('#house', config, {57: {reaction: 'yes'}});

@@ -2,9 +2,10 @@
 // a grid of squares — the night theme turns it on. Off until named: `walls: true`.
 //
 // A wall follows the units of every floor, with `padding` around them: from the first unit on a floor to the last,
-// over the gaps between entrances, so a short top floor or a tower is narrower than the floors under it. Under an arch
-// there is no wall — the section starts higher. `walls: null` on a section leaves it without one. Walls are put first
-// into their sections, so they are behind. The picture keeps room for the padding at its edges.
+// so a short top floor or a tower is narrower than the floors under it. It goes over the gap between two entrances
+// that both have that floor; an entrance without it breaks the wall there (a semi-basement under some entrances only).
+// Under an arch there is no wall — the section starts higher. `walls: null` on a section leaves it without one. Walls
+// are put first into their sections, so they are behind. The picture keeps room for the padding at its edges.
 import {optionsAt} from '../plugins.js';
 
 export default {
@@ -27,25 +28,42 @@ export default {
             if (!own) continue;
             const padding = own.padding ?? gap / 2;
 
-            // every row of the section: from its first unit to its last, whichever entrance they are in
-            const rows = new Map();
-            for (const unit of section.entrances.flatMap(entrance => entrance.floors.flatMap(floor => floor.units))) {
-                const {x, y, width, height} = unit.box;
-                for (let top = y; top < y + height; top += step) {
-                    const row = rows.get(top);
-                    rows.set(top, row ? [Math.min(row[0], x), Math.max(row[1], x + width)] : [x, x + width]);
+            // every row of every entrance: from its first unit to its last
+            const rows = new Map();     // top → [{entrance, left, right}], entrances in the order they are drawn
+            section.entrances.forEach((entrance, order) => {
+                for (const unit of entrance.floors.flatMap(floor => floor.units)) {
+                    const {x, y, width, height} = unit.box;
+                    for (let top = y; top < y + height; top += step) {
+                        if (!rows.has(top)) rows.set(top, []);
+                        const row = rows.get(top);
+                        const part = row.find(part => part.entrance === order);
+                        if (part) [part.left, part.right] = [Math.min(part.left, x), Math.max(part.right, x + width)];
+                        else row.push({entrance: order, left: x, right: x + width});
+                    }
                 }
-            }
+            });
 
-            // rows one over another meet in the middle of the gap; rows of one width in a run are one rect
+            // a row's pieces of neighbouring entrances are one piece: the wall goes over the gap between them
+            const pieces = new Map([...rows].map(([top, parts]) => [top, parts.sort((a, b) => a.entrance - b.entrance)
+                .reduce((joined, part) => {
+                    const last = joined.at(-1);
+                    if (last && part.entrance === last.entrance + 1) Object.assign(last, {entrance: part.entrance, right: part.right});
+                    else joined.push({...part});
+                    return joined;
+                }, [])]));
+
+            // a piece meets the rows over and under it in the middle of the gap where they overlap; pieces of one width
+            // one over another are one rect
+            const overlaps = (top, {left, right}) => (pieces.get(top) ?? []).some(other => other.left < right && other.right > left);
             const rects = [];
-            for (const top of [...rows.keys()].sort((a, b) => a - b)) {
-                const [left, right] = rows.get(top);
-                const above = rows.has(top - step);
-                const bottom = top + size + (rows.has(top + step) ? gap / 2 : padding);
-                const last = rects.at(-1);
-                if (above && last.left === left && last.right === right) last.bottom = bottom;
-                else rects.push({left, right, y: top - (above ? gap / 2 : padding), bottom});
+            for (const top of [...pieces.keys()].sort((a, b) => a - b)) {
+                for (const piece of pieces.get(top)) {
+                    const above = overlaps(top - step, piece);
+                    const bottom = top + size + (overlaps(top + step, piece) ? gap / 2 : padding);
+                    const same = above && rects.find(rect => rect.next === top && rect.left === piece.left && rect.right === piece.right);
+                    if (same) Object.assign(same, {bottom, next: top + step});
+                    else rects.push({left: piece.left, right: piece.right, y: top - (above ? gap / 2 : padding), bottom, next: top + step});
+                }
             }
 
             section.node.sub.unshift(...rects.map(({left, right, y, bottom}) => ({tag: 'rect', opt: {

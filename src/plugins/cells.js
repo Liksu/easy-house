@@ -10,10 +10,14 @@
 //
 // How it looks is `ctx.style`: cells puts its options there first (its `style` hook), plugins after it change what
 // they need (reactions — the outline and the number), and a render can patch it for what is below: base({style: {fill}}).
+//
+// A unit's `draw(ctx)` is drawn in the square instead of its label — a flag, a sign, a picture; the square stays.
+// (`label` written as a function is a `draw`: the resolver moves it there.)
 import {nodes, extend} from '../scene.js';
 
-function square({unit, style, options, house}) {
-    const {box, config: {label}} = unit;
+function square(ctx) {
+    const {unit, style, options, house} = ctx;
+    const {box, config: {label, draw}} = unit;
     const sub = [{
         tag: 'rect',
         opt: {
@@ -23,7 +27,8 @@ function square({unit, style, options, house}) {
         }
     }];
 
-    if (options.numbers && label != null) sub.push({
+    if (typeof draw === 'function') sub.push(...nodes(draw(ctx)));
+    else if (options.numbers && label != null) sub.push({
         tag: 'text',
         val: escape(label),
         opt: {

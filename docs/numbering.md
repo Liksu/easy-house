@@ -88,19 +88,32 @@ Every unit has an `id` — the key of its state, of its events, of `house.unit(i
 default; a unit without a number has its explicit `id`, or its place: `'1.1.1.4'` (section, entrance, floor,
 position).
 
-Where the numbering starts again, the number alone is not a key, and the key grows by what tells the flats apart:
+Where the numbering starts again, the number alone is not a key, and the key grows by what tells the flats apart —
+each level with its letter: `s` a section, `e` an entrance, `f` a floor:
 
 | Numbered | Key |
 |---|---|
 | through the house | `'5'` |
-| each section from 1 — two houses in one building, 7 and 7a | `'2-5'`: section-flat |
-| each entrance from 1, in several sections | `'2-1-5'`: section-entrance-flat |
-| each entrance from 1, one section | `'2-5'`: entrance-flat |
+| each section from 1 — two houses in one building, 7 and 7a | `'s2-5'` |
+| each entrance from 1, in several sections | `'s2-e1-5'` |
+| each entrance from 1, one section | `'e2-5'` |
+| back on one entrance: a floor with `-1` | `'f3--1'` |
 
 A level that has one value in the house tells nothing apart and is left out. All the numbers of a house have keys
 of one shape. Labels without a number (`'C'`) are keyed apart from the numbers, by the same rule: a concierge in
-every section is `'1-C'`, `'2-C'`, and the flats keep their numbers. The same number twice on one floor is a
+every section is `'s1-C'`, `'s2-C'`, and the flats keep their numbers. The same number twice on one floor is a
 mistake: easy-house warns. A patch by number on a floor (`5: {…}`) uses the number as it is written there.
+
+That is `keys: 'auto'`, the default: one repeated number — a mistake, or a flat numbered by hand — changes the keys
+of the whole house. When the data comes from elsewhere, write the shape in the config, and the keys stay as they are:
+
+| `keys` | Key |
+|---|---|
+| `'auto'` | the number, or with what tells it apart |
+| `'number'` | the number, always; a repeated one is a warning |
+| `'section'` | `'s2-5'`, always |
+| `'entrance'` | `'s1-e2-5'`, always — even in a house of one section |
+| `'floor'` | `'s1-e2-f3-5'`, always |
 
 <div id="demo-keys" class="demo"></div>
 
@@ -111,7 +124,7 @@ const house = new House('#demo-keys', {
     units: 2,
     floors: 3,
     sections: [{entrances: 2}, {entrances: 2, start: 1}]       // 7 and 7a: each from 1
-}, {'1-5': {reaction: 'yes'}, '2-5': {reaction: 'no'}});
+}, {'s1-5': {reaction: 'yes'}, 's2-5': {reaction: 'no'}});
 
-console.log(house.unit('2-5').unit.config.label);              // 5
+console.log(house.unit('s2-5').unit.config.label);             // 5
 ```

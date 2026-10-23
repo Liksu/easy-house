@@ -104,7 +104,8 @@ An item of a row, or the value of a position, is a **slot**:
 
 | Field of a unit | |
 |---|---|
-| `label` | what is written on it: a number, a number as a string, a label; without it the unit gets the next number |
+| `label` | what is written on it: a number, a number as a string, a label; without it the unit gets the next number. A function is a `draw` |
+| `draw` | `ctx => nodes` — drawn in the square instead of the label: a flag, a sign; see [cells](plugins/cells.md#draw) |
 | `kind` | its [kind](#kinds): `'flat'` by default |
 | `title` | its tooltip |
 | `id` | its key for the state and the events; its number by default |

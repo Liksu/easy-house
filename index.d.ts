@@ -17,7 +17,7 @@ export interface Box {
 /** A colour, `'$name'` of the palette, or null for none */
 export type Color = string | null;
 
-/** The key of a unit: its number, or the number with what tells it apart (`'2-5'`), or its explicit `id` */
+/** The key of a unit: its number, or the number with the levels that tell it apart (`'s2-5'`), or its explicit `id` */
 export type Id = string | number;
 
 export type Direction = 'ltr' | 'rtl';
@@ -61,8 +61,13 @@ export interface PluginKeys {
 
 /** A unit described in full */
 export interface UnitConfig extends PluginKeys {
-    /** what is written on it: a number (the counter goes on from it), a number as a string ('25/1'), a label ('S') */
-    label?: string | number;
+    /**
+     * what is written on it: a number (the counter goes on from it), a number as a string ('25/1'), a label ('S');
+     * a function is a `draw`
+     */
+    label?: string | number | ((ctx: UnitCtx) => Nodes);
+    /** drawn in the square instead of the label: a flag, a sign; the square stays */
+    draw?: (ctx: UnitCtx) => Nodes;
     /** its kind: 'flat' by default */
     kind?: string;
     /** its tooltip */
@@ -176,6 +181,11 @@ export interface HouseConfig extends ScopeConfig, Partial<Omit<Geometry, 'size'>
     theme?: 'light' | 'dark' | 'night' | (string & {}) | HouseConfig;
     /** colours of the palette by name */
     colors?: Partial<Palette>;
+    /**
+     * the shape of the keys: 'auto' — the number while numbers do not repeat, else with what tells them apart
+     * ('s2-5'); 'number' — the number always; 'section' | 'entrance' | 'floor' — every level down to it: 's1-e2-5'
+     */
+    keys?: 'auto' | 'number' | 'section' | 'entrance' | 'floor';
     /** the background of the picture; null — transparent */
     background?: Color;
 }

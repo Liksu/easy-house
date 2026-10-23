@@ -54,7 +54,7 @@ function build(config, moved) {
     });
 
     const moves = [];
-    const units = number(sections, config.start, warn, moves);
+    const units = number(sections, config, warn, moves);
     return {sections, units, warnings, moves};
 }
 
@@ -160,6 +160,15 @@ function layoutEntrance(config, path, {start, render}, moved, warn) {
     return {index: path.entrance, path, floors, levels, width, grid, props, start, render, config, moved};
 }
 
+// a label written as a function is a drawing: it goes to `draw`, and the unit is as one without a label
+function drawn(fields, warn) {
+    if (typeof fields.label !== 'function') return fields;
+    const {label, ...rest} = fields;
+    if (rest.draw == null) return {...rest, draw: label};
+    warn('a unit has both draw and a function in label: the label is dropped');
+    return rest;
+}
+
 function slot(raw, kinds, warn) {
     if (raw == null) return {type: 'hole'};
 
@@ -173,7 +182,7 @@ function slot(raw, kinds, warn) {
         // fields merge (the closer wins), but renders chain: each one gets the more general one as its base
         const renders = [kinds.flat.render, kind !== 'flat' && kinds[kind]?.render, own.render]
             .filter(render => typeof render === 'function');
-        return {type: 'unit', fields: merge(preset, own), renders};
+        return {type: 'unit', fields: drawn(merge(preset, own), warn), renders};
     }
 
     warn(`unknown slot ${JSON.stringify(raw)}, treated as a hole`);
@@ -187,7 +196,7 @@ function slot(raw, kinds, warn) {
  * written as a string and takes one step (with `numericStrings` — moves the counter to its digits); any other
  * string ('S', 'C') is just a label and takes no number. Only units without a label use `enumerable`.
  */
-function number(sections, start, warn, moves) {
+function number(sections, {start, keys: shape = 'auto'}, warn, moves) {
     const units = [];
     let counter = (start ?? 1) - 1;
 
@@ -222,7 +231,8 @@ function number(sections, start, warn, moves) {
                     } else if (enumerable) label = ++counter;
 
                     const path = {section: section.index, entrance: entrance.index, floor, position: cell.col + 1};
-                    const id = String(fields.id ?? label ?? `${path.section}.${path.entrance}.${floor}.${path.position}`);
+                    // an empty label writes nothing and keys nothing: such a unit is keyed by its place
+                    const id = String(fields.id ?? (label === '' ? null : label) ?? `${path.section}.${path.entrance}.${floor}.${path.position}`);
 
                     Object.assign(cell, {id, label, kind, enumerable, path});
                     units.push(cell);
@@ -234,36 +244,52 @@ function number(sections, start, warn, moves) {
     }
 
     const placed = units.filter(cell => cell.type === 'unit');     // `10: null` turned some into holes
-    keys(placed, warn);
+    keys(placed, shape, warn);
     return placed;
 }
 
 const LEVELS = ['section', 'entrance', 'floor'];
+const PREFIXES = {section: 's', entrance: 'e', floor: 'f'};
 
 /**
- * Where numbering starts again, the number alone is not a key: the key grows by what tells the flats apart.
- * Sections numbered each from 1 (two houses in one building, 7 and 7a) — section-flat: '2-5'; entrances numbered
- * each from 1 in several sections — section-entrance-flat: '2-1-5'. A level that has one value in the house tells
- * nothing apart and is left out: one section with entrances from 1 — entrance-flat: '2-5'. All the numbers of a house
- * have keys of one shape; labels without a number ('C') are keyed apart from them, the same way. An explicit `id`
- * is the key as it is; a unit without a number or a label is keyed by its place ('1.1.1.4'), which is unique anyway.
- * What repeats at every depth — the same number twice on one floor — is a mistake, and is reported.
+ * The key of a unit with a number or a label: the number, or the number with the levels that tell the flats apart,
+ * each with its letter — 's2-5' (section 2, flat 5), 's2-e1-5', 'f3--1' (floor 3, flat -1).
+ *
+ *   keys: 'auto'     — (the default) the number, while the numbers of the house do not repeat; where numbering starts
+ *                      again, the key grows by what tells the flats apart: sections each from 1 (two houses in one
+ *                      building, 7 and 7a) — 's2-5'; entrances each from 1 — 's2-e1-5'. A level with one value in the
+ *                      house tells nothing apart and is left out: one section with entrances from 1 — 'e2-5'.
+ *   keys: 'number'   — the number, always; a repeated one is reported
+ *   keys: 'section' | 'entrance' | 'floor' — every level down to this one, always: 's1-e2-5' even in a house of one
+ *                      section — a key the data can be keyed by without looking at the house
+ *
+ * All the numbers of a house have keys of one shape; labels without a number ('C') are keyed apart from them, by the
+ * same rule. An explicit `id` is the key as it is; a unit without a number or a label is keyed by its place
+ * ('1.1.1.4'), which is unique anyway. What repeats at every depth — the same number twice on one floor — is a
+ * mistake, and is reported.
  */
-function keys(units, warn) {
-    const numbered = cell => typeof cell.label === 'number' || /^\d/.test(cell.label ?? '');
+function keys(units, shape, warn) {
+    const numbered = cell => typeof cell.label === 'number' || /^-?\d/.test(cell.label ?? '');
     const groups = [
-        units.filter(cell => cell.fields.id == null && cell.label != null && numbered(cell)),
-        units.filter(cell => cell.fields.id == null && cell.label != null && !numbered(cell))
+        units.filter(cell => cell.fields.id == null && cell.label != null && cell.label !== '' && numbered(cell)),
+        units.filter(cell => cell.fields.id == null && cell.label != null && cell.label !== '' && !numbered(cell))
     ];
-    // the levels that have more than one value in the house: one section, or entrances one per section, tell nothing
-    const many = LEVELS.filter(level => new Set(units.map(cell => cell.path[level])).size > 1);
-    const keyOf = (cell, depth) => [...LEVELS.slice(0, depth).filter(level => many.includes(level)).map(level => cell.path[level]), cell.id].join('-');
-    const repeats = (cells, depth) => cells.length - new Set(cells.map(cell => keyOf(cell, depth))).size;
+    const keyOf = (cell, levels) => [...levels.map(level => PREFIXES[level] + cell.path[level]), cell.id].join('-');
 
-    for (const cells of groups) {
-        const least = repeats(cells, LEVELS.length);
-        const depth = [0, 1, 2, 3].find(depth => repeats(cells, depth) === least);
-        for (const cell of cells) cell.id = keyOf(cell, depth);
+    if (shape === 'number' || LEVELS.includes(shape)) {
+        const levels = LEVELS.slice(0, LEVELS.indexOf(shape) + 1);
+        for (const cells of groups) for (const cell of cells) cell.id = keyOf(cell, levels);
+    } else {
+        if (shape !== 'auto') warn(`keys: '${shape}' — one of 'auto', 'number', 'section', 'entrance', 'floor'; keyed as 'auto'`);
+        // the levels that have more than one value in the house: one section, or entrances one per section, tell nothing
+        const many = LEVELS.filter(level => new Set(units.map(cell => cell.path[level])).size > 1);
+        const down = depth => LEVELS.slice(0, depth).filter(level => many.includes(level));
+        const repeats = (cells, depth) => cells.length - new Set(cells.map(cell => keyOf(cell, down(depth)))).size;
+        for (const cells of groups) {
+            const least = repeats(cells, LEVELS.length);
+            const depth = [0, 1, 2, 3].find(depth => repeats(cells, depth) === least);
+            for (const cell of cells) cell.id = keyOf(cell, down(depth));
+        }
     }
 
     const seen = new Set();

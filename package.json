@@ -1,6 +1,6 @@
 {
     "name": "easy-house",
-    "version": "1.0.1",
+    "version": "1.1.0",
     "description": "Draws an apartment building in SVG: every flat is a square in its place. A short config, plugins, events",
     "type": "module",
     "main": "./index.js",

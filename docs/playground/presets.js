@@ -11,7 +11,7 @@ export const presets = [
     },
     {
         name: 'Kyiv: Khreshchatyk 23–27, the House with a star',
-        code: `// the flag over the tower, drawn by the unit itself: emoji flags are not drawn on Windows
+        code: `// the flag over the tower, drawn in the square of its unit: emoji flags are not drawn on Windows
 const flag = ({unit: {box}}) => {
     const width = box.width * 0.32, height = width * 2 / 3;
     const x = box.x + (box.width - width) / 2, y = box.y + (box.height - height) / 2;
@@ -49,7 +49,7 @@ export default {
                 to: 16,
                 1: [{kind: 'cinema', colSpan: 4}],
                 15: {units: 0, label: '', '@2': {kind: 'tower', colSpan: 2}},
-                16: {units: 0, label: '', '@2': {kind: 'tower', colSpan: 2, title: 'the flag', render: flag}}
+                16: {units: 0, label: '', '@2': {kind: 'tower', colSpan: 2, title: 'the flag', draw: flag}}
             },
             roof: null
         },
@@ -90,7 +90,7 @@ export function setup(house) {
 // The second, 1990: slip-formed, the tallest house of Kyiv then. In the stylobate — the entrance and the hall; over
 // the hall a technical floor, then 20 floors of flats, 6 a floor — 120 flats, and a technical floor under the roof.
 // (The source says 22 floors; its parts add up to 24.)
-// Two houses, each numbered from 1: the keys are house-flat — '2-17'.
+// Two houses, each numbered from 1: the keys are section-flat — 's2-17'.
 export default {
     units: 6,
     size: 30,
@@ -121,6 +121,123 @@ export default {
     walls: true,
     hover: true,
     text: {text: ['Kyiv', 'Obolonska square 2, 2-a']}         // the address, at the top left
+};
+`
+    },
+    {
+        name: 'Kyiv: a stepped house on Chervonoi Kalyny avenue',
+        code: `// Kyiv, Chervonoi Kalyny avenue (once Mayakovskoho), Nos. 62A, 64A and 66A — stepped houses of four entrances,
+// 18, 16, 12 and 12 floors high, four flats a floor, numbered through the house.
+export default {
+    units: 4,
+    entrances: [{floors: 18}, {floors: 16}, {floors: 12}, {floors: 12}],
+    walls: true,
+    roof: true,
+    hover: true,
+    text: {x: '100%', anchor: 'right', text: ['Kyiv', 'Chervonoi Kalyny avenue']}
+};
+`
+    },
+    {
+        name: 'Kharkiv: the Slovo house',
+        code: `// Kharkiv, Kultury street 9 — the Slovo house (1930; architect M. Dashkevych), built by a cooperative of writers.
+// In plan it is the letter С, for "Slovo" — the word: a long wing on the street and two wings into the courtyard.
+// Here it is unrolled into one front: the left wing, the street wing, the right wing.
+// From the drawings and the descriptions: five entrances — three from the street, one in each side wing; five floors
+// over a semi-basement that runs under the whole house; a corner tower with a spire where the street wing meets the
+// right one. 66 flats of three and four rooms; the two in the semi-basement of
+// entrance 1 were for the building manager and the janitor; a kindergarten was in a semi-basement, a solarium on the
+// roof of entrance 5. By 1938 the residents of 40 of the 66 flats were repressed: the Executed Renaissance.
+// Assumed, as no plan of the flats is published: three flats a floor in the left wing, two at each entrance of the
+// street wing, four in the right wing and three on its top floor, under the tower; the kindergarten under entrance 3
+// — 66 in all.
+export default {
+    kinds: {
+        service: {kind: 'special', label: '', title: 'the building manager, the janitor'},
+        storage: {enumerable: false, label: '', title: 'storerooms'},
+        kindergarten: {enumerable: false, label: 'kids', title: 'the kindergarten for the children of the writers'},
+        tower: {enumerable: false, label: '', title: 'the corner tower with a spire'}
+    },
+    sections: [
+        // the left wing: entrance 1
+        {units: 3, floors: {to: 5, 0: [{kind: 'service'}, {kind: 'service'}, {kind: 'storage'}]}},
+        // the street wing: entrances 2, 3 and 4
+        {units: 2, entrances: [
+            {floors: {to: 5, 0: [{kind: 'storage', colSpan: 2}]}},
+            {floors: {to: 5, 0: [{kind: 'kindergarten', colSpan: 2}]}},
+            {floors: {to: 5, 0: [{kind: 'storage', colSpan: 2}]}}
+        ]},
+        // the right wing: entrance 5 and the corner tower
+        {units: 4, floors: {to: 6, 0: [{kind: 'storage', colSpan: 4}], 5: 3, 6: {units: 0, label: '', '@1': {kind: 'tower', colSpan: 2}}}, roof: null}
+    ],
+    walls: true,
+    roof: true,
+    hover: true,
+    text: {at: 'bottom', text: ['Kharkiv, the Slovo house: 66 flats; by 1938 the residents of 40 were repressed']}
+};
+`
+    },
+    {
+        name: 'Lviv: the Dnister house',
+        code: `// Lviv, Ruska street 20 — the house of the Dnister insurance company (1905–1906; the bureau of Ivan Levynskyi,
+// façades by Tadeusz Obmiński, ceramics by Oleksandr Lushpynskyi): the Hutsul secession. Four storeys, two blocks,
+// each with its courtyard and staircase: on Ruska street the company's offices; on Pidvalna a symmetric front with
+// its central entrance and, over it, the wooden tower.
+// The project: shops and a gymnasium on the ground floor, two flats on each of the floors 2–4, of six rooms and of four.
+// In the gymnasium of the Sokil society Les Kurbas first appeared on stage, in 1909; the Fortuna Nova confectionery
+// was here until 1939. Which block had the flats is not said: here the one on Pidvalna.
+export default {
+    kinds: {
+        office: {enumerable: false, label: 'Dnister', title: 'the offices of the Dnister insurance company'},
+        gym: {enumerable: false, label: 'Sokil', title: 'the gymnasium of the Sokil society: Les Kurbas first appeared on stage here, 1909'},
+        shop: {enumerable: false, label: '', title: 'the Fortuna Nova confectionery, until 1939'},
+        door: {enumerable: false, label: '', title: 'the central entrance on Pidvalna'},
+        tower: {enumerable: false, label: '', title: 'the wooden tower, restored in 2006'}
+    },
+    entrances: [
+        // on Ruska street: the offices
+        {units: 3, floors: {to: 4, 1: [{kind: 'gym', colSpan: 3}], 2: [{kind: 'office', colSpan: 3}], 3: [{kind: 'office', colSpan: 3}], 4: [{kind: 'office', colSpan: 3}]}},
+        // on Pidvalna: the flats, the entrance and the tower in the middle
+        {
+            units: 5,
+            floors: {
+                to: 5,
+                1: [{kind: 'shop', colSpan: 2}, {kind: 'door'}, {kind: 'shop', colSpan: 2}],
+                2: [{colSpan: 3, title: 'six rooms'}, {colSpan: 2, title: 'four rooms'}],
+                3: [{colSpan: 3, title: 'six rooms'}, {colSpan: 2, title: 'four rooms'}],
+                4: [{colSpan: 3, title: 'six rooms'}, {colSpan: 2, title: 'four rooms'}],
+                5: {units: 0, label: '', '@3': {kind: 'tower'}}
+            }
+        }
+    ],
+    walls: true,
+    roof: true,
+    hover: true,
+    text: {at: 'bottom', text: ['Lviv, Ruska street 20']}
+};
+`
+    },
+    {
+        name: 'Odesa: the Margulis house',
+        code: `// Odesa, Marazliivska street 34B — the revenue house of Ignatiy Margulis (1912; engineer Felix Pappe), Art Nouveau,
+// on the corner of Sabanskyi lane. The ground slopes: the section on the lane has six full floors, while from
+// Marazliivska street its first floor is a semi-basement — the same storeys, a street a floor higher; shops are there
+// now, a pharmacy and groceries. Six floors from the lane made it the tallest house of Odesa for many decades. The
+// painter Hryhoriy Kryzhevskyi lived here.
+// The floors of a section are numbered as its street sees them: base lifts the Marazliivska one, so its floor 0 is
+// on the row of floor 1 of the lane. Flats a floor are not published: assumed two, for wealthy tenants.
+export default {
+    units: 2,
+    kinds: {shop: {enumerable: false, label: ''}},
+    sections: [
+        {floors: 6},                                                        // on Sabanskyi lane
+        {base: 1, floors: {from: 0, to: 5, 0: [{kind: 'shop', title: 'a pharmacy'}, {kind: 'shop', title: 'groceries'}]}}  // on Marazliivska
+    ],
+    floorLabels: {at: 'section'},
+    walls: true,
+    roof: true,
+    hover: true,
+    text: {at: 'bottom', text: ['Odesa, Marazliivska 34B: Sabanskyi lane on the left, Marazliivska street on the right']}
 };
 `
     },

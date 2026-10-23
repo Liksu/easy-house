@@ -30,6 +30,31 @@ new House('#demo-cells', {
 });
 ```
 
+## draw
+
+A unit's `draw` is drawn in its square instead of the label — a flag, a sign, a little picture; the square, its
+fill and outline stay. It gets the same context as a plugin's hook, `unit.box` among it, and returns
+[svg-easy-tree](../how-it-works.md#svg-easy-tree) nodes. A function written in `label` is the same: it goes to `draw`,
+and the unit is as one without a label — a flat gets its number.
+
+<div id="demo-draw" class="demo"></div>
+
+```js live
+import {House} from 'easy-house';
+
+// the flag of Ukraine in the middle of a square
+const flag = ({unit: {box}}) => {
+    const width = box.width * 0.6, height = width * 2 / 3;
+    const x = box.x + (box.width - width) / 2, y = box.y + (box.height - height) / 2;
+    return [
+        {tag: 'rect', opt: {x, y, width, height: height / 2, fill: '#0057b7'}},
+        {tag: 'rect', opt: {x, y: y + height / 2, width, height: height / 2, fill: '#ffd700'}}
+    ];
+};
+
+new House('#demo-draw', {units: 4, floors: {to: 3, 3: {'@2': {kind: 'special', colSpan: 2, label: flag}}}});
+```
+
 ## render
 
 A unit, a kind or `kinds.flat` may have its own `render`. They wrap each other like layers — the most specific

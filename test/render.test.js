@@ -736,7 +736,27 @@ test('walls follow every floor, a roof covers its top floor: a tower is narrower
     const [strip] = byClass(svg, 'roof').map(node => node.opt);
     assert.deepEqual([strip.x, strip.width], [tower.x + 35 / 2, tower.width - 35]);
 
+    // a floor some entrances have and some do not: the wall goes over the gap only between neighbours that have it
+    const cellars = drawWithState({units: 1, entrances: [{floors: {to: 1, 0: 1}}, {floors: 1}, {floors: {to: 1, 0: 1}}], walls: true}, plugins);
+    const rects = byClass(cellars.svg, 'wall').map(node => node.opt);
+    const zero = cellars.geometry.sections[0].entrances[0].floors.find(floor => floor.floor === 0).box;
+    assert.deepEqual(rects.filter(rect => rect.y + rect.height > zero.y + zero.height).length, 2);       // two pieces in the row 0
+    assert.equal(rects.filter(rect => rect.y + rect.height <= zero.y).length, 1);                         // the row 1 is whole
+
     // walls: null on a section — no wall there
     const two = drawWithState({units: 2, floors: 2, sections: [{}, {walls: null}], walls: true}, plugins).svg;
     assert.deepEqual(byClass(two, 'section').map(section => byClass(section, 'wall').length), [1, 0]);
+});
+
+test('draw: drawn in the square instead of the label; a function in label is a draw', () => {
+    const star = ({unit: {box}}) => ({tag: 'circle', opt: {cx: box.x + box.width / 2, cy: box.y + box.height / 2, r: 5}});
+    const config = {units: 3, floors: {to: 1, 1: [{draw: star}, {label: star, kind: 'special'}, {label: star}]}};
+    const {svg, model} = drawWithState(config, [cells]);
+    const units = byClass(svg, 'unit');
+    // the square stays, the drawing is in place of the text
+    assert.deepEqual(units.map(unit => unit.sub.map(node => node.tag)), [['rect', 'circle'], ['rect', 'circle'], ['rect', 'circle']]);
+    // a function is no label: a flat gets its number, a special unit none
+    assert.deepEqual(model.units.map(cell => [cell.label, typeof cell.fields.draw]), [[1, 'function'], [undefined, 'function'], [2, 'function']]);
+    assert.deepEqual(model.warnings, []);
+    assert.match(resolve({units: 1, floors: {to: 1, 1: [{label: star, draw: star}]}}).warnings[0], /both draw and a function in label/);
 });

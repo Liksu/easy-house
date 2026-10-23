@@ -338,18 +338,23 @@ test('keys: where numbering starts again, the key grows by what tells the flats 
 
     // two houses in one building, 7 and 7a, each numbered from 1: section-flat
     const raskovoi = {units: 2, floors: 1, sections: [{entrances: 2}, {entrances: 2, start: 1}]};
-    assert.deepEqual(ids(raskovoi), ['1-1', '1-2', '1-3', '1-4', '2-1', '2-2', '2-3', '2-4']);
+    assert.deepEqual(ids(raskovoi), ['s1-1', 's1-2', 's1-3', 's1-4', 's2-1', 's2-2', 's2-3', 's2-4']);
     assert.deepEqual(warnings(raskovoi), []);
 
     // entrances numbered each from 1, in several sections: section-entrance-flat
     const each = {units: 2, floors: 1, sections: [{entrances: [{}, {start: 1}]}, {entrances: [{start: 1}, {start: 1}]}]};
-    assert.deepEqual(ids(each), ['1-1-1', '1-1-2', '1-2-1', '1-2-2', '2-1-1', '2-1-2', '2-2-1', '2-2-2']);
+    assert.deepEqual(ids(each), ['s1-e1-1', 's1-e1-2', 's1-e2-1', 's1-e2-2', 's2-e1-1', 's2-e1-2', 's2-e2-1', 's2-e2-2']);
     // one section: the section tells nothing apart — entrance-flat
-    assert.deepEqual(ids({units: 2, floors: 1, entrances: [{}, {start: 1}]}), ['1-1', '1-2', '2-1', '2-2']);
+    assert.deepEqual(ids({units: 2, floors: 1, entrances: [{}, {start: 1}]}), ['e1-1', 'e1-2', 'e2-1', 'e2-2']);
+    // numbers that go back on one entrance: floor-flat; a negative number keeps its minus
+    assert.deepEqual(ids({units: 2, floors: {to: 2, 2: [1, -1]}}), ['f1-1', 'f1-2', 'f2-1', 'f2--1']);
 
     // labels without a number are keyed apart: a concierge in each section does not change the keys of the flats
     const concierges = {units: 2, floors: {to: 2, 1: {'@1': {label: 'C'}}}, sections: 2};
-    assert.deepEqual(ids(concierges), ['1-C', '1', '2', '3', '2-C', '4', '5', '6']);
+    assert.deepEqual(ids(concierges), ['s1-C', '1', '2', '3', 's2-C', '4', '5', '6']);
+    // an empty label keys nothing: such units are keyed by their place, and the keys of the rest stay as they are
+    assert.deepEqual(ids({units: 2, floors: {to: 1, 1: [{kind: 'special', label: ''}, {kind: 'special', label: ''}]}, sections: 2}),
+        ['1.1.1.1', '1.1.1.2', '2.1.1.1', '2.1.1.2']);
     // an explicit id is the key as it is; a unit without a number — its place
     assert.deepEqual(ids({units: 2, floors: {to: 1, 1: [{id: 'shop'}, {kind: 'special'}]}, sections: [{}, {start: 1}]}),
         ['shop', '1.1.1.2', 'shop', '2.1.1.2']);
@@ -357,10 +362,19 @@ test('keys: where numbering starts again, the key grows by what tells the flats 
 
     // the same number twice on one floor is a mistake at any depth: reported, the rest keyed as usual
     const twice = resolve({units: 3, floors: {to: 1, 1: [1, 2, 2]}, sections: [{}, {start: 1}]});
-    assert.deepEqual(twice.units.map(cell => cell.id), ['1-1', '1-2', '1-2', '2-1', '2-2', '2-2']);
+    assert.deepEqual(twice.units.map(cell => cell.id), ['s1-1', 's1-2', 's1-2', 's2-1', 's2-2', 's2-2']);
     assert.equal(twice.warnings.length, 2);
 
     // patches by number still go by the number written on the floor
     const patched = resolve({units: 2, floors: {to: 1, 1: {2: {title: 'two'}}}, sections: [{}, {start: 1}]});
-    assert.deepEqual(patched.units.filter(cell => cell.fields.title).map(cell => cell.id), ['1-2', '2-2']);
+    assert.deepEqual(patched.units.filter(cell => cell.fields.title).map(cell => cell.id), ['s1-2', 's2-2']);
+
+    // the shape written in the config: the same keys whatever the numbers do
+    assert.deepEqual(ids({units: 2, floors: 1, sections: 2, keys: 'section'}), ['s1-1', 's1-2', 's2-3', 's2-4']);
+    assert.deepEqual(ids({units: 2, floors: 1, keys: 'entrance'}), ['s1-e1-1', 's1-e1-2']);
+    assert.deepEqual(ids({units: 1, floors: 2, keys: 'floor'}), ['s1-e1-f1-1', 's1-e1-f2-2']);
+    const plain = resolve({...raskovoi, keys: 'number'});
+    assert.deepEqual(plain.units.map(cell => cell.id), ['1', '2', '3', '4', '1', '2', '3', '4']);
+    assert.equal(plain.warnings.length, 4);
+    assert.match(warnings({units: 1, floors: 1, keys: 'house'})[0], /keys: 'house'/);
 });
