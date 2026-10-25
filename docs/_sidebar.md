@@ -20,6 +20,7 @@
   * [icon](/plugins/icon.md)
   * [hole](/plugins/hole.md)
   * [Writing a plugin](/writing-plugins.md)
+* [Recipes](/recipes.md)
 * Inside
   * [How it works](/how-it-works.md)
   * [API](/api.md)

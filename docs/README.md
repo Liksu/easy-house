@@ -26,6 +26,7 @@ Here are the main options — change them and see the config and the house:
   only what changed is redrawn; events instead of dialogs.
 * **[Plugins](plugins.md)** — everything drawn is a plugin: floor numbers, colours by votes, stacks, marks, text,
   a highlight under the pointer. Replace them or add your own.
+* **[Recipes](recipes.md)** — a vote with a window to answer in; collecting money, with a progress bar and a list of who paid.
 * **[How it works](how-it-works.md)** and the **[API](api.md)**.
 
 ## Install

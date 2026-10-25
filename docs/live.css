@@ -51,6 +51,18 @@
     display: inline-block;
 }
 
+/* a stage with more than a house in it — a recipe's page around the house — takes the whole width */
+.demo.wide {
+    display: block;
+}
+
+/* a table in a stage is the example's own: not the full-width table of the docs */
+.markdown-section .demo table {
+    display: table;
+    width: auto;
+    margin: 0;
+}
+
 .demo-row {
     display: flex;
     flex-wrap: wrap;
@@ -89,6 +101,31 @@
 .demo-row.on-silver {
     background: silver;
     border-radius: 4px;
+}
+
+/* The windows of the recipes: the browser's own <dialog>. */
+.demo dialog {
+    border: 1px solid #d0d7de;
+    border-radius: 8px;
+    padding: 0.4rem 1.1rem 1rem;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    font-size: 0.95rem;
+}
+
+.demo dialog::backdrop {
+    background: rgba(0, 0, 0, 0.25);
+}
+
+.demo dialog button {
+    margin: 0.2rem 0.3rem 0 0;
+    padding: 0.25rem 0.8rem;
+    font: inherit;
+    cursor: pointer;
+}
+
+.demo dialog input {
+    width: 7rem;
+    font: inherit;
 }
 
 /* Caption under a stage, for rows that compare several settings. */
