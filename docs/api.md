@@ -72,7 +72,7 @@ The steps of the [pipeline](how-it-works.md), to use without the DOM — in test
 | Value | Is |
 |---|---|
 | `defaultGeometry` | `{size: 35, gap: 6, entranceGap: 12, sectionGap: 16, padding: 1}` |
-| `defaultKinds` | `{flat: {enumerable: true}, special: {enumerable: false}}` |
+| `defaultKinds` | `{flat: {enumerable: true}, special: {enumerable: false}, empty: {label: '', enumerable: false}}` |
 | `sizes` | the sizes in one word: `{pixel: {size: 1, gap: 0}, …, xl: {size: 14, gap: 3}}` |
 | `themes` | the themes by name: `{light, dark, night}`; add your own |
 | `colors` | the default palette: `{background, unit, label, wall, …}` |

@@ -381,25 +381,25 @@ export default {
 `
     },
     {
-        name: 'Spans by number; merged flats',
-        code: `// A span may be written by the number of a flat — as you see it. Two cases:
+        name: 'Spans: designed by position, merged by number',
+        code: `// A span may be written by position or by the number of a flat — as you see it. Two cases:
 //
-// 1. The unit is designed so (a penthouse, a duplex in a new house): one number however many cells it takes,
-//    the numbers after it move. By number such a span goes only forward — up and along the floor —
-//    so the numbers before it stay. That is why 21 on the 6th floor counts the duplex 19 already.
-// 2. Flats merged in a built house — merged: true: the numbering stays, every cell keeps its number.
-//    Such a span moves nothing and goes any way: 10: {colSpan: -2, merged: true} — the flat is 10, 9 is gone.
+// 1. By position you design the house: a penthouse, a duplex in a new house — one number however many cells
+//    it takes, the numbers after it move.
+// 2. By number you describe the house as it is built: the flats were merged, every cell keeps its number to
+//    itself, nothing moves, and the span goes any way: 10: {colSpan: -2} — the flat is 10, 9 is gone.
+//    By position the same is merged: true.
 export default {
     units: 4,
     floors: {
         to: 7,
-        2: {6: {colSpan: 2}},                       // a wide 6 — the same as '@2': {colSpan: 2}
-        3: {10: {colSpan: -2, merged: true}},       // 9 and 10 merged, the flat keeps 10
+        2: {'@2': {colSpan: 2}},                    // a wide flat, designed: one number, the numbers after it move
+        3: {10: {colSpan: -2}},                     // 9 and 10 merged, the flat keeps 10
         5: {
-            16: {rowSpan: -2, merged: true},        // 12 and 16 merged one above the other: the flat is 16, 12 is gone
-            19: {rowSpan: 2}                        // a duplex 19 — the same as '@4': {rowSpan: 2}
+            16: {rowSpan: -2},                      // 12 and 16 merged one above the other: the flat is 16, 12 is gone
+            '@4': {rowSpan: 2}                      // a designed duplex
         },
-        6: {21: {rowSpan: 2}}                       // and one more, over it
+        6: {'@2': {colSpan: 2, merged: true}}       // merged, written by position
     }
 };
 `
@@ -847,7 +847,8 @@ ${Object.entries(defaultGeometry).map(([key, value]) => `    ${key}: ${value},` 
 //
 // A unit (a slot): null — a hole; 57 — a number; '25/1' — a number as a string; 'S' — a label;
 //   {label, kind, enumerable, id, title, colSpan, rowSpan, merged, render, …fields of plugins by their names}
-// In a floor object by number: 54: {…} — the data of the flat; 54: {rowSpan: 2} — a duplex up;
+// In a floor object by number — the house as built, no number moves: 54: {…} — the data of the flat;
+//   54: {kind: 'empty'} — a blank square in its place; 54: {rowSpan: 2} — merged with the flat above;
 //   54: null — a hole in its place (the number is not used).
 `;
 }

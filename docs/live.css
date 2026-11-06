@@ -196,6 +196,19 @@ pre.is-editing code {
     overflow: auto;
 }
 
+.live-warning {
+    max-width: 100%;
+    margin: 0.4rem 0 0;
+    padding: 0.5rem 0.6rem;
+    font-size: 0.7rem;
+    line-height: 1.4;
+    color: #7a4b00;
+    background: #fff4d6;
+    border-radius: 3px;
+    white-space: pre-wrap;
+    overflow: auto;
+}
+
 
 /* The configurator of the introduction (configurator.js): the house and the controls, the code under them. */
 

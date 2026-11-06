@@ -31,7 +31,7 @@ In a plugin of your own the palette is `house.colors`: `{fill: house.colors.high
 | `yesFill`, `noFill`, `maybeFill`, `ignoreFill`, `noneFill` | `lightgreen`, `pink`, `lightyellow`, `gainsboro`, `gainsboro` | reactions: the fill |
 | `yesBright`, `noBright`, `maybeBright` | `mediumseagreen`, `salmon`, `orange` | reactions on a [small house](drawing.md#sizes-in-one-word) |
 | `glow` | `null` | a light around a unit with a reaction |
-| `stacks` | five pastel colours | [stacks](plugins/stacks.md), by position |
+| `stacks` | eight pastel colours | [stacks](plugins/stacks.md), by position |
 | `highlight`, `aim` | `#1e88e5`, `#e3f2fd` | [hover](plugins/hover.md): the outline, the floor and the stack |
 | `hole`, `holeLine` | `#fff5f5`, `#c66` | [hole](plugins/hole.md) |
 

@@ -12,9 +12,11 @@ The rules the config and the plugins follow. Where the docs say nothing about a 
 3. **The building and the data are kept apart.** The config describes the building — its sections, floors and
    flats. The state holds the data about the flats — a vote, a payment, a debt — keyed by the flat number. The
    config rarely changes; the state changes often, and `house.update()` redraws only what it touched.
-4. **A position is a place, a number is a flat.** `'@2'` means "the second place on this floor"; a hole, a kind or
-   a span written there may shift the numbers of the flats after it. `54` means "the flat numbered 54" as you see
-   it on the picture; it is used to add data to that flat and never shifts the numbers before it.
+4. **A position is a place, a number is a flat.** By position you design the house: `'@2'` is the second place on
+   this floor, and a hole, a kind or a span written there may shift the numbers of the flats after it. By number you
+   describe the house as it is built: `54` is the flat numbered 54 as you see it on the picture, and nothing written
+   there shifts any number — its own one stays on it or goes unused: `10: null`, `10: {kind: 'empty'}`; a span there
+   is merged.
 5. **Written the way it is drawn.** Rows, positions and the sign of a span go from left to right, as on the
    picture, whichever way the flats are numbered.
 6. **A plugin's name is its key.** The same name sets its options (`floorLabels: {…}`), switches it off

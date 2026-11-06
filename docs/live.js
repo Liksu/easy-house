@@ -75,6 +75,26 @@
     window.setTimeout = guard(window.setTimeout);
     window.requestAnimationFrame = guard(window.requestAnimationFrame);
 
+    // ------------------------------------------------------------- warnings
+
+    /**
+     * easy-house tells what it could not use in a config with console.warn —
+     * `easy-house: 10: kind would change the numbering…`. While an example runs,
+     * those lines are caught as well, to be shown under its picture: in the
+     * console nobody reading the docs would see them.
+     */
+    let warnings = null;
+    const warn = console.warn;
+
+    console.warn = function (...args) {
+        if (insideExample && warnings) {
+            const [first, ...rest] = args.map(String);
+            if (first === 'easy-house:') warnings.push(...rest);
+            else if (first.startsWith('easy-house: ')) warnings.push(first.slice('easy-house: '.length));
+        }
+        return warn.apply(console, args);
+    };
+
     // ------------------------------------------------------------- execution
 
     async function execute(source, stage) {
@@ -82,6 +102,7 @@
 
         const url = URL.createObjectURL(new Blob([source], {type: 'text/javascript'}));
 
+        const caught = warnings = [];
         insideExample = true;
         try {
             await import(url);
@@ -89,8 +110,10 @@
             report(stage, error);
         } finally {
             insideExample = false;
+            if (warnings === caught) warnings = null;
             URL.revokeObjectURL(url);
         }
+        if (caught.length) notice(stage, caught);
     }
 
     function report(stage, error) {
@@ -99,6 +122,13 @@
         box.textContent = String((error && error.stack) || error);
         stage.appendChild(box);
         console.error('[live example]', error);
+    }
+
+    function notice(stage, lines) {
+        const box = document.createElement('pre');
+        box.className = 'live-warning';
+        box.textContent = lines.join('\n');
+        stage.appendChild(box);
     }
 
     // --------------------------------------------------------------- markup

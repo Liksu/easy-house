@@ -392,7 +392,7 @@ test('stacks: the fill of the position the unit stands at; off until named; a fi
     const plugins = [cells, stacks, reactions];
     const fills = (config, state) => Object.fromEntries(byClass(draw(config, plugins, state).svg, 'unit')
         .map(unit => [unit.opt['data-unit'], unit.sub.find(node => node.tag === 'rect').opt.fill]));
-    const config = {units: 3, floors: {to: 2, 1: {1: {colSpan: 2}}, 2: {'@3': {colSpan: -2}}}};
+    const config = {units: 3, floors: {to: 2, 1: {'@1': {colSpan: 2}}, 2: {'@3': {colSpan: -2}}}};
 
     // off by default: the house has to name it
     assert.deepEqual(Object.values(fills(config)), Array(4).fill('whitesmoke'));
@@ -404,6 +404,10 @@ test('stacks: the fill of the position the unit stands at; off until named; a fi
     assert.equal(fills({...config, ...palette, reactions: {fill: true}}, {1: {reaction: 'yes'}})[1], 'lightgreen');
     // and off again on a level
     assert.equal(fills({...config, ...palette, floors: {...config.floors, 1: {...config.floors[1], stacks: null}}})[1], 'whitesmoke');
+
+    // a flat in another stack, or with a colour of its own — a name of the palette too
+    const moved = {units: 3, floors: {to: 1, 1: {1: {stacks: 3}, 2: {stacks: 'gold'}, 3: {stacks: '$highlight'}}}, ...palette};
+    assert.deepEqual(fills(moved), {1: 'blue', 2: 'gold', 3: '#1e88e5'});
 });
 
 test("a unit's title is its tooltip however it is drawn; a mark has a colour, a font and a tooltip of its own", () => {

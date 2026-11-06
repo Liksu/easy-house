@@ -10,7 +10,7 @@
    as it is and takes one step of the counter. With `numericStrings: true` the counter goes to its digits.
 5. **Any other string** — `'S'`, `'C'` — is a label: it takes no number.
 6. **A unit without a label** gets the next number if it is `enumerable` — flats and kinds of your own are,
-   `special` units are not.
+   `special` and `empty` units are not.
 
 <div id="demo-rules" class="demo"></div>
 
@@ -39,12 +39,13 @@ new House('#demo-strings', {units: 4, floors: {to: 2, 1: [23, 24, '25/1', '25/2'
 
 ## By position or by number
 
-In a floor object, `'@2'` is a **position** and `54` is a **flat number**:
+In a floor object, `'@2'` is a **position** and `54` is a **flat number**. By position you design the house, and
+the numbers flow; by number you describe the house as it is built, and the numbers stay:
 
 * **`'@2': …` — structure, before the numbering.** A hole, a kind, a span, an explicit number: the numbers
   after it move.
-* **`54: {…}` — the flat numbered 54, as you see it, after the numbering.** Its data: `title`, `render`,
-  fields of plugins. A `label`, a `kind` or an `id` would change its own number, so they go by position.
+* **`54: {…}` — the flat numbered 54, as you see it, after the numbering.** Its data — `title`, `render`, fields
+  of plugins — and anything else too, but no number moves: the flat's own number stays on it or goes unused.
 
 ```js
 12: {
@@ -54,12 +55,19 @@ In a floor object, `'@2'` is a **position** and `54` is a **flat number**:
 }
 ```
 
-* **`10: null`** — a hole where 10 was: there is nothing there, 10 is not used, no other number moves.
-* **A span by number** — `19: {rowSpan: 2}` is the span at the position of 19. A designed span may go only
-  forward in the numbering (up, and along the floor), so the numbers before it and its own stay. Several of
-  them are put in one at a time, so the number of the next one is the number you see.
-* **`merged: true`** — flats merged in a built house keep the numbering, so such a span goes any way:
-  `20: {colSpan: -2, merged: true}` — the flat keeps 20, 19 is gone.
+| | the numbers move — by position | the numbers stay — by number |
+|---|---|---|
+| nothing there | `'@3': null` | `10: null` — 10 is not used |
+| a blank square | `'@3': {kind: 'empty'}` | `10: {kind: 'empty'}` — 10 is not used |
+| a label | `'@3': {label: 'S'}` | `10: {label: 'S'}` — 10 is not used |
+| a special unit | `'@3': {kind: 'special'}` — no number | `10: {kind: 'special'}` — keeps 10, is not a flat |
+| a span | `'@3': {rowSpan: 2}` — one number for both floors, the numbers after it move | `10: {rowSpan: 2}` — merged: the number above is gone |
+
+* **A span by number** is one of a built house: every cell it takes keeps its number to itself, as merged flats
+  do, so it goes any way — `20: {colSpan: -2}`: the flat keeps 20, 19 is gone. A designed span, a penthouse
+  with one number however many cells it takes, is written by position. `merged: true` by position is the same
+  span of a built house written there.
+* **Several by number** are put in one at a time; as no number moves, each one is the number you see.
 
 <div id="demo-bynumber" class="demo"></div>
 
@@ -70,9 +78,9 @@ new House('#demo-bynumber', {
     units: 4,
     floors: {
         to: 7,
-        3: {10: null},                          // a hole: 10 is not used
-        5: {19: {rowSpan: 2}},                  // a duplex 19, by its number
-        6: {21: {rowSpan: 2}}                   // and another one — 21 as it is after the first
+        3: {10: null, 11: {kind: 'empty'}},     // nothing where 10 was, a blank square where 11 was
+        5: {19: {rowSpan: 2}},                  // 19 took the flat above it: 23 is gone
+        6: {'@2': {rowSpan: 2}}                 // a designed duplex: one number, the numbers after it move
     }
 });
 ```

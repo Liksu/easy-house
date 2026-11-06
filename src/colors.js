@@ -29,7 +29,7 @@ export const colors = {
     noBright: 'salmon',
     maybeBright: 'orange',
     glow: null,                     // a light around a unit with a reaction (the night theme)
-    stacks: ['mistyrose', 'blanchedalmond', 'lemonchiffon', 'honeydew', 'aliceblue'],
+    stacks: ['mistyrose', 'blanchedalmond', 'lemonchiffon', 'honeydew', 'aliceblue', '#f2ffe0', '#f6ebff', 'lightcyan'],
     highlight: '#1e88e5',           // the outline under the pointer
     aim: '#e3f2fd',                 // the floor and the stack it aims along
     hole: '#fff5f5',                // a destroyed flat

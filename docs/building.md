@@ -133,12 +133,19 @@ new House('#demo-kinds', {
         salon: {label: 'S', title: 'Beauty salon', cells: {fill: 'mistyrose'}},
         concierge: {label: 'C', title: 'Concierge'}
     },
-    floors: {to: 5, 1: {'@4': {kind: 'salon'}, '@5': {kind: 'concierge'}}}
+    floors: {to: 5, 1: {'@4': {kind: 'salon'}, '@5': {kind: 'concierge'}}, 3: {'@1': {kind: 'empty'}}}
 });
 ```
 
-Built in: `flat` — numbered; `special` — anything else that is drawn as a unit but not numbered: a shop, a
-concierge, a technical room. A kind of your own is one line: `kinds: {shop: {enumerable: false}}`.
+Built in:
+
+| Kind | Fields | |
+|---|---|---|
+| `flat` | `{enumerable: true}` | numbered; every unit is a flat first |
+| `special` | `{enumerable: false}` | anything else drawn as a unit but not numbered: a shop, a concierge, a technical room |
+| `empty` | `{label: '', enumerable: false}` | a blank square: nothing written, no number; with no square at all the place is a hole, `null` |
+
+A kind of your own is one line: `kinds: {shop: {enumerable: false}}`.
 
 ### Spans
 
@@ -148,7 +155,8 @@ one below.
 
 A span is **designed** — a penthouse is one flat however many cells it takes, so the numbers after it move — or
 **merged**: two flats of a built house became one, every cell keeps its number to itself, nothing moves
-(`merged: true`). By number or by position — see [Numbering](numbering.md#by-position-or-by-number).
+(`merged: true`). By position a span is designed unless it says `merged: true`; by number it is always merged —
+see [Numbering](numbering.md#by-position-or-by-number).
 
 <div id="demo-spans" class="demo"></div>
 

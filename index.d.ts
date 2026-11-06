@@ -46,7 +46,8 @@ export type Switch<O> = Partial<O> | boolean | null;
 /** Keys of the built-in plugins, at any level; the keys of other plugins are open */
 export interface PluginKeys {
     cells?: Switch<CellsOptions>;
-    stacks?: Switch<StacksOptions>;
+    /** its options; on a unit also the stack it is coloured as (4) or its own colour ('gold') */
+    stacks?: Switch<StacksOptions> | number | string;
     walls?: Switch<WallsOptions>;
     roof?: Switch<RoofOptions>;
     floorLabels?: Switch<FloorLabelsOptions>;
@@ -68,7 +69,7 @@ export interface UnitConfig extends PluginKeys {
     label?: string | number | ((ctx: UnitCtx) => Nodes);
     /** drawn in the square instead of the label: a flag, a sign; the square stays */
     draw?: (ctx: UnitCtx) => Nodes;
-    /** its kind: 'flat' by default */
+    /** its kind: 'flat' by default; built in also 'special' (not numbered) and 'empty' (a blank square) */
     kind?: string;
     /** its tooltip */
     title?: string;
@@ -107,8 +108,9 @@ export interface FloorFields extends PluginKeys {
 }
 
 /**
- * A floor that differs: `'@2': …` — the position 2 (structure: a hole, a kind, a span, a number), `54: {…}` — the
- * unit numbered 54 (its data; null — a hole in its place), anything else — a field of the floor.
+ * A floor that differs: `'@2': …` — the position 2 (structure: a hole, a kind, a span, a number; the numbers after it
+ * move), `54: {…}` — the unit numbered 54 as built (its data, a kind, a label, a span — merged; null — a hole in its
+ * place; no number moves), anything else — a field of the floor.
  */
 export type FloorObject = FloorFields & {
     [position: `@${number}`]: Slot;

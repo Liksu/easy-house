@@ -6,10 +6,12 @@ import {merge, isObject} from './utils.js';
 // Every unit is a flat first, then its kind, then its own fields: flat < kind < unit.
 // `kinds` cascades like everything else, so a section can redefine even `flat` for its units.
 // Built in: flat — numbered; special — anything else, drawn as a unit but not numbered (a shop, a concierge,
-// a technical room). Kinds of your own are one line: kinds: {shop: {enumerable: false}}.
+// a technical room); empty — a blank square: nothing written, no number. Kinds of your own are one line:
+// kinds: {shop: {enumerable: false}}.
 export const defaultKinds = {
     flat: {enumerable: true},
-    special: {enumerable: false}
+    special: {enumerable: false},
+    empty: {label: '', enumerable: false}
 };
 
 // structure, a scope's own numbering start and its own render are not inherited by the scopes below
@@ -20,10 +22,9 @@ const OWN = ['sections', 'entrances', 'start', 'render'];
  * @returns {{sections: Array, units: Array, warnings: Array<string>}}
  */
 export function resolve(config = {}) {
-    // A span written by a unit's number (`20: {rowSpan: 2}`) is the same as the span at that unit's position.
-    // It moves only the numbers after it — a penthouse has one number however many cells it takes — so it may only
-    // go forward in the numbering: up, and along the floor's direction. Merged flats (`merged: true`) move no number
-    // at all — every cell they take keeps its number to itself — so they may go any way: `20: {colSpan: -2, merged: true}`.
+    // A span written by a unit's number (`20: {rowSpan: 2}`) is a span of the house as it is built: every cell it
+    // takes keeps its number to itself, as merged flats do, so nothing moves and it may go any way. A designed span —
+    // a penthouse, one number however many cells, the numbers after it move — is written by position.
     // Spans are moved to their positions one at a time, in the order of numbering: the next one is looked up
     // on the model with the ones before it in place.
     const moved = [];
@@ -231,14 +232,11 @@ function number(sections, {start, keys: shape = 'auto'}, warn, moves) {
                     } else if (enumerable) label = ++counter;
 
                     const path = {section: section.index, entrance: entrance.index, floor, position: cell.col + 1};
-                    // an empty label writes nothing and keys nothing: such a unit is keyed by its place
-                    const id = String(fields.id ?? (label === '' ? null : label) ?? `${path.section}.${path.entrance}.${floor}.${path.position}`);
-
-                    Object.assign(cell, {id, label, kind, enumerable, path});
+                    Object.assign(cell, {id: idOf(fields, label, path), label, kind, enumerable, path});
                     units.push(cell);
                 }
 
-                patchUnits(entrance, floor, onFloor, direction, moves, warn);
+                patchUnits(entrance, floor, onFloor, moves, warn);
             }
         }
     }
@@ -246,6 +244,11 @@ function number(sections, {start, keys: shape = 'auto'}, warn, moves) {
     const placed = units.filter(cell => cell.type === 'unit');     // `10: null` turned some into holes
     keys(placed, shape, warn);
     return placed;
+}
+
+// an explicit id, else the label; an empty label writes nothing and keys nothing: such a unit is keyed by its place
+function idOf(fields, label, path) {
+    return String(fields.id ?? (label === '' ? null : label) ?? `${path.section}.${path.entrance}.${path.floor}.${path.position}`);
 }
 
 const LEVELS = ['section', 'entrance', 'floor'];
@@ -305,35 +308,36 @@ function numberDirection(entrance, floor) {
 }
 
 // what a patch by unit number may not change: these would change the unit's own number or the ones before it
-const STRUCTURE = ['label', 'kind', 'enumerable', 'id'];
 const SPANS = ['colSpan', 'rowSpan', 'merged'];
 
 /**
- * Keys of a floor object that are ids of units on that floor (`54: {oldman: true}`) patch those units' data.
- * They are applied after the numbering, so they address the numbers you see. A kind or an explicit label
- * changes the numbering itself — that goes by position (`'@1': …`).
+ * Keys of a floor object that are ids of units on that floor (`54: {oldman: true}`) patch those units. They are
+ * applied after the numbering, so they address the numbers you see — the house as it is built, and no number moves:
  *
- * A span may go by number too (`20: {rowSpan: 2}` — a duplex), if it goes forward in the numbering: up, and along
- * the floor's direction. It moves only the numbers after the unit; resolve() puts it at the unit's position.
- * Flats merged in a built house keep the numbering as it was: `20: {colSpan: -2, merged: true}` — 20 takes the place
- * of 19 too, 19 is gone, nothing moves; so a merged span may go any way.
+ * - data, a kind, a label, an id: the unit takes them where it is, its own number stays on it or goes unused —
+ *   `10: {kind: 'empty'}` is a blank square where 10 was, `10: {label: 'S'}` is S there, 11 stays 11 either way;
+ *   `enumerable` changes no number here, only says whether the unit counts as a flat;
+ * - a span: every cell it takes keeps its number to itself, as merged flats do (`merged: true` goes without saying),
+ *   so it may go any way — `20: {colSpan: -2}`: 20 takes the place of 19 too, 19 is gone; resolve() puts it at
+ *   the unit's position. A designed span, which moves the numbers after it, goes by position: `'@4': {rowSpan: 2}`.
  *
  * `10: null` makes a hole where 10 was: there is nothing there, 10 is simply not used, no other number moves.
  * (`'@1': null` is a place without a flat before the numbering — the numbers go on without it.)
  */
-function patchUnits(entrance, floor, cells, direction, moves, warn) {
+function patchUnits(entrance, floor, cells, moves, warn) {
     const props = entrance.props[floor];
     if (!props) return;
 
     const where = `section ${entrance.path.section}, entrance ${entrance.path.entrance}, floor ${floor}`;
     const byId = new Map(cells.map(cell => [cell.id, cell]));
+    const kinds = merge(defaultKinds, entrance.config.kinds || {});
 
     for (const [key, value] of Object.entries(props)) {
         const cell = byId.get(key);
         if (!cell) {
             if (/^\d/.test(key)) {
                 warn(`${where} has no unit ${key} (units here: ${[...byId.keys()].join(', ') || 'none'})`
-                    + ` — a place without a flat, a kind or a span goes by position: '@1'`);
+                    + ` — a place without a flat goes by position: '@1'`);
                 delete props[key];
             }
             continue;   // a field of the floor: mark, render, start…
@@ -356,31 +360,31 @@ function patchUnits(entrance, floor, cells, direction, moves, warn) {
             continue;
         }
 
-        const structural = Object.keys(patch).filter(field => STRUCTURE.includes(field));
-        if (structural.length) {
-            warn(`${where}, unit ${key}: ${structural.join(', ')} would change the numbering — write it by position: '@n'`);
+        if (patch.merged === false) {
+            warn(`${where}, unit ${key}: by number a span is one of the house as it is built, its cells keep their `
+                + `numbers; a designed one, which moves the numbers after it, goes by position: '@n'`);
+        }
+        const spans = ['colSpan', 'rowSpan'].filter(field => field in patch && patch[field] !== (cell.fields[field] ?? 1));
+        if (spans.length && !entrance.moved.some(move => move.floor === cell.floor && move.col === cell.col)) {
+            moves.push({
+                ...entrance.path, floor: cell.floor, col: cell.col,
+                fields: {...Object.fromEntries(spans.map(field => [field, patch[field]])), merged: true}
+            });
         }
 
-        const spans = SPANS.filter(field => field in patch && patch[field] !== (cell.fields[field] ?? {colSpan: 1, rowSpan: 1}[field]));
-        if (spans.length) {
-            const {colSpan = 1, rowSpan = 1, merged} = patch;
-            const back = !merged && (rowSpan < -1 || (direction === 'rtl' ? colSpan > 1 : colSpan < -1));
-            if (back) {
-                warn(`${where}, unit ${key}: by number a span goes forward in the numbering — up (rowSpan > 0) and `
-                    + `${direction === 'rtl' ? 'to the left (colSpan < 0)' : 'to the right (colSpan > 0)'}, `
-                    + `any other way it would move the numbers before it; flats merged in a built house keep `
-                    + `their numbers — merged: true; or write it by position: '@n'`);
-            } else if (!entrance.moved.some(move => move.floor === cell.floor && move.col === cell.col)) {
-                moves.push({
-                    ...entrance.path, floor: cell.floor, col: cell.col,
-                    fields: Object.fromEntries(spans.map(field => [field, patch[field]]))
-                });
-            }
-        }
+        // a kind as in slot(): flat < kind < the patch; the label of the kind or the patch replaces the number
+        const kind = patch.kind;
+        if (kind != null && !Object.hasOwn(kinds, kind)) warn(`unknown kind '${kind}'`);
+        const preset = kind == null ? {} : kind === 'flat' ? kinds.flat : merge(kinds.flat, kinds[kind] || {});
+        const fields = drawn(merge(preset, omit(patch, SPANS)), warn);
 
-        const fields = omit(patch, [...STRUCTURE, ...SPANS]);
         cell.fields = merge(cell.fields, fields);
-        if (typeof fields.render === 'function') cell.renders = [...cell.renders, fields.render];
+        if (Object.hasOwn(fields, 'label')) cell.label = fields.label;
+        cell.kind = cell.fields.kind || 'flat';
+        cell.enumerable = cell.fields.enumerable !== false;
+        cell.id = idOf(cell.fields, cell.label, cell.path);
+        cell.renders = [...cell.renders, kind != null && kind !== 'flat' && kinds[kind]?.render, fields.render]
+            .filter(render => typeof render === 'function');
     }
 }
 

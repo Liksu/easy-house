@@ -86,8 +86,13 @@ test('string labels take one step each; numericStrings counts from their digits'
     assert.deepEqual(rowsOf({units: 4, numericStrings: true, floors: {to: 2, 1: [23, 24, '25/1', '25/2']}})[0], [26, 27, 28, 29]);
 });
 
-test('kinds: flat and special are built in; a special unit takes no number unless given one; own kinds are flats', () => {
-    assert.deepEqual(Object.keys(defaultKinds), ['flat', 'special']);
+test('kinds: flat, special and empty are built in; a special unit takes no number unless given one; own kinds are flats', () => {
+    assert.deepEqual(Object.keys(defaultKinds), ['flat', 'special', 'empty']);
+    // empty: a blank square — nothing written, no number, the numbers go on past it
+    assert.deepEqual(rowsOf({units: 3, floors: {to: 2, 1: {'@2': {kind: 'empty'}}}}), [
+        [3, 4, 5],
+        [1, {label: '', kind: 'empty'}, 2]
+    ]);
     assert.deepEqual(rowsOf({units: 3, floors: {to: 2, 1: [{kind: 'special', label: 'S'}, {kind: 'special', label: 10}, {kind: 'special'}]}}), [
         [11, 12, 13],
         ['S', 10, null]
@@ -233,15 +238,24 @@ test("a floor object: positions ('@n') change the structure, unit numbers patch 
     assert.deepEqual([flat.path.position, flat.fields.oldman, flat.fields.title], [2, true, 'ветеран']);
 });
 
-test('a patch by number: a number not on the floor or a field that moves the numbering is warned, nothing moves', () => {
+test('a patch by number: a number not on the floor is warned; a label, a kind or an id moves no number', () => {
     const model = resolve({units: 5, floors: {to: 13, 1: [1, 2, 3, 'С', 'К'], 12: {53: null, 55: {oldman: true, label: 111}}}});
-    const [missing, structural] = model.warnings;
 
-    assert.match(missing, /floor 12 has no unit 53 \(units here: 54, 55, 56, 57, 58\)/);
-    assert.match(structural, /unit 55: label would change the numbering/);
-    assert.deepEqual(matrix(model)[0][0][1], [54, 55, 56, 57, 58]);
-    assert.equal(model.units.find(cell => cell.id === '55').fields.oldman, true);
+    assert.equal(model.warnings.length, 1);
+    assert.match(model.warnings[0], /floor 12 has no unit 53 \(units here: 54, 55, 56, 57, 58\)/);
+    // 111 where 55 was: 55 is not used, nothing else moves
+    assert.deepEqual(matrix(model)[0][0].slice(0, 2), [[59, 60, 61, 62, 63], [54, 111, 56, 57, 58]]);
+    assert.equal(model.units.find(cell => cell.id === '111').fields.oldman, true);
     assert.equal(model.sections[0].entrances[0].width, 5);
+
+    // a kind by number: a blank square where 10 was, 11 stays 11; special keeps its number but is no flat
+    const kinds = resolve({units: 4, floors: {to: 3, 3: {10: {kind: 'empty'}}, 2: {6: {kind: 'special'}, 7: {label: 'S'}, 8: {id: 'x'}}}});
+    assert.deepEqual(kinds.warnings, []);
+    assert.deepEqual(matrix(kinds)[0][0], [[9, {label: '', kind: 'empty'}, 11, 12], [5, 6, 'S', 8], [1, 2, 3, 4]]);
+    assert.deepEqual(kinds.units.filter(cell => cell.floor > 1).map(cell => [cell.id, cell.label, cell.kind, cell.enumerable]), [
+        ['5', 5, 'flat', true], ['6', 6, 'special', false], ['S', 'S', 'flat', true], ['x', 8, 'flat', true],
+        ['9', 9, 'flat', true], ['1.1.3.2', '', 'empty', false], ['11', 11, 'flat', true], ['12', 12, 'flat', true]
+    ]);
 });
 
 test('10: null — a hole where 10 was: nothing is there, no other number moves', () => {
@@ -261,33 +275,38 @@ test('10: null — a hole where 10 was: nothing is there, no other number moves'
     assert.deepEqual(rowsOf(duplex), [[7, null, 8], [4, null, 6], [1, 2, 3]]);
 });
 
-test('a span by number: the same as at the unit\'s position; the next one counts the ones before it', () => {
+test('a span by number is one of the house as built: merged, the same as merged at its position; nothing moves', () => {
     const byNumber = {units: 4, floors: {to: 7, 2: {6: {colSpan: 2, title: 'wide'}}, 5: {19: {rowSpan: 2}}, 6: {21: {rowSpan: 2}}}};
-    const byPosition = {units: 4, floors: {to: 7, 2: {'@2': {colSpan: 2}}, 5: {'@4': {rowSpan: 2}}, 6: {'@2': {rowSpan: 2}}}};
+    const merged = {colSpan: undefined, merged: true};
+    const byPosition = {units: 4, floors: {to: 7, 2: {'@2': {...merged, colSpan: 2}}, 5: {'@3': {...merged, rowSpan: 2}}, 6: {'@1': {...merged, rowSpan: 2}}}};
     const model = resolve(byNumber);
 
     assert.deepEqual(model.warnings, []);
     assert.deepEqual(matrix(model), matrix(resolve(byPosition)));
-    assert.deepEqual(rowsOf(byNumber).slice(0, 3), [[23, 24, 25], [20, {label: 21, rowSpan: 2}, 22], [16, 17, 18, {label: 19, rowSpan: 2}]]);
+    // 7, 23 and 25 are under the spans: gone; every other number stays where it was
+    assert.deepEqual(rowsOf(byNumber).slice(0, 3), [
+        [26, 27, 28],
+        [{label: 21, rowSpan: 2, merged: true}, 22, 24],
+        [17, 18, {label: 19, rowSpan: 2, merged: true}, 20]
+    ]);
+    assert.deepEqual(rowsOf(byNumber)[5], [5, {label: 6, colSpan: 2, merged: true}, 8]);
     assert.equal(model.units.find(cell => cell.id === '6').fields.title, 'wide');    // the data of the patch stays
 
     // an explicit row above: its items take the free positions, like under a span by position
-    assert.deepEqual(rowsOf({units: 3, floors: {to: 2, 1: {2: {rowSpan: 2}}, 2: ['a', 'b']}}), [['a', 'b'], [1, {label: 2, rowSpan: 2}, 3]]);
+    assert.deepEqual(rowsOf({units: 3, floors: {to: 2, 1: {2: {rowSpan: 2}}, 2: ['a', 'b']}}), [['a', 'b'], [1, {label: 2, rowSpan: 2, merged: true}, 3]]);
 });
 
-test('a span by number goes only forward in the numbering; back, or a kind or a label, is warned and moves nothing', () => {
+test('a span by number goes any way, down and back too; merged: false there is warned, a designed span goes by position', () => {
     const down = resolve({units: 4, floors: {to: 2, 2: {6: {rowSpan: -2}}}});
-    assert.match(down.warnings[0], /unit 6: by number a span goes forward in the numbering — up \(rowSpan > 0\) and to the right/);
-    assert.deepEqual(matrix(down)[0][0], [[5, 6, 7, 8], [1, 2, 3, 4]]);
+    assert.deepEqual(down.warnings, []);
+    assert.deepEqual(matrix(down)[0][0], [[5, {label: 6, rowSpan: -2, merged: true}, 7, 8], [1, 3, 4]]);
 
     const left = resolve({units: 4, floors: {to: 1, 1: {2: {colSpan: -2}}}});
-    assert.equal(left.warnings.length, 1);
+    assert.deepEqual(matrix(left)[0][0], [[{label: 2, colSpan: -2, merged: true}, 3, 4]]);
 
-    // with right-to-left numbering forward is to the left
-    const rtl = resolve({units: 4, numberDirection: 'rtl', floors: {to: 1, 1: {2: {colSpan: -2}}}});
-    assert.deepEqual(rtl.warnings, []);
-    assert.deepEqual(matrix(rtl)[0][0], [[3, {label: 2, colSpan: -2}, 1]]);
-    assert.match(resolve({units: 4, numberDirection: 'rtl', floors: {to: 1, 1: {2: {colSpan: 2}}}}).warnings[0], /to the left \(colSpan < 0\)/);
+    const designed = resolve({units: 4, floors: {to: 2, 1: {2: {rowSpan: 2, merged: false}}}});
+    assert.match(designed.warnings[0], /unit 2: by number a span is one of the house as it is built.*goes by position: '@n'/);
+    assert.deepEqual(matrix(designed)[0][0], [[5, 7, 8], [1, {label: 2, rowSpan: 2, merged: true}, 3, 4]]);
 });
 
 test('numberDirection: right to left on a floor; by default as direction; cascades down to a floor', () => {
@@ -307,8 +326,10 @@ test('merged flats keep the numbering: every cell they take keeps its number to 
     // 19 and 20 merged, the room keeps 20: 19 is gone, nothing moves
     assert.deepEqual(rows({floors: {to: 2, 1: {4: {colSpan: -2, merged: true}}}}), [[5, 6, 7, 8], [1, 2, {label: 4, colSpan: -2, merged: true}]]);
     assert.deepEqual(rows({floors: {to: 2, 1: {3: {colSpan: 2, merged: true}}}}), [[5, 6, 7, 8], [1, 2, {label: 3, colSpan: 2, merged: true}]]);
-    // a designed penthouse: one number however many cells, the numbers after it move
-    assert.deepEqual(rows({floors: {to: 2, 1: {3: {colSpan: 2}}}}), [[4, 5, 6, 7], [1, 2, {label: 3, colSpan: 2}]]);
+    // a designed penthouse, by position: one number however many cells, the numbers after it move
+    assert.deepEqual(rows({floors: {to: 2, 1: {'@3': {colSpan: 2}}}}), [[4, 5, 6, 7], [1, 2, {label: 3, colSpan: 2}]]);
+    // by number a span is merged anyway: `merged: true` may be left out
+    assert.deepEqual(rows({floors: {to: 2, 1: {3: {colSpan: 2}}}}), [[5, 6, 7, 8], [1, 2, {label: 3, colSpan: 2, merged: true}]]);
     // up and down
     assert.deepEqual(rows({floors: {to: 2, 1: {3: {rowSpan: 2, merged: true}}}}), [[5, 6, 8], [1, 2, {label: 3, rowSpan: 2, merged: true}, 4]]);
     assert.deepEqual(rows({floors: {to: 2, 2: {7: {rowSpan: -2, merged: true}}}}), [[5, 6, {label: 7, rowSpan: -2, merged: true}, 8], [1, 2, 4]]);
