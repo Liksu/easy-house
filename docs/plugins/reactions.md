@@ -16,7 +16,7 @@ house.update({57: {reaction: 'maybe'}});
 | `colors` | `{yes: 'green', no: 'red', maybe: 'orange', ignore: 'gray', none: 'gray'}` | per reaction: the outline and the label |
 | `fills` | `{yes: 'lightgreen', no: 'pink', maybe: 'lightyellow', ignore: 'gainsboro', none: 'gainsboro'}` | per reaction: the fill, with `fill: true` |
 | `fill` | `false` | fill the square by the reaction too |
-| `always` | `false` | outline the units without a reaction too, in `colors.none` |
+| `always` | `false` | the units without a reaction too: an outline in `colors.none`, with `fill` — `fills.none`; without it they stay as they are, [stacks](stacks.md) and all |
 | `style` | `{strokeWidth: 2, fontWeight: 'bold'}` | what every unit with a reaction gets besides its colours |
 | `styles` | `{}` | any [style](../drawing.md#how-a-unit-looks) per reaction: `{no: {fontSize: 10}, none: {fill: 'white'}}` |
 

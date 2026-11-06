@@ -351,6 +351,10 @@ test('reactions: the outline and the number by the state; always and fill like a
     assert.deepEqual(look(svg, '2'), ['whitesmoke', 'red', 'red', 'bold']);
     assert.deepEqual(look(svg, '3'), ['whitesmoke', null, 'gray', null]);
 
+    ({svg} = draw({...config, reactions: {fill: true}}, [cells, reactions], state));
+    assert.deepEqual(look(svg, '1'), ['lightgreen', 'green', 'green', 'bold']);
+    assert.deepEqual(look(svg, '3'), ['whitesmoke', null, 'gray', null]);      // without `always` as it is
+
     ({svg} = draw({...config, reactions: {always: true, fill: true}}, [cells, reactions], state));
     assert.deepEqual(look(svg, '1'), ['lightgreen', 'green', 'green', 'bold']);
     assert.deepEqual(look(svg, '3'), ['gainsboro', 'gray', 'gray', null]);
@@ -401,7 +405,11 @@ test('stacks: the fill of the position the unit stands at; off until named; a fi
     // 1 is written left to right — the colour of its left cell; 4, right to left — of its right one
     assert.deepEqual(fills({...config, ...palette}), {1: 'red', 2: 'blue', 3: 'red', 4: 'blue'});
     assert.equal(fills({...config, stacks: true})[1], 'mistyrose');                       // the heroes palette
-    assert.equal(fills({...config, ...palette, reactions: {fill: true}}, {1: {reaction: 'yes'}})[1], 'lightgreen');
+    // a fill by reaction wins; a unit without one keeps its stack, unless `always` (the night theme fills by reaction)
+    assert.deepEqual(fills({...config, ...palette, reactions: {fill: true}}, {1: {reaction: 'yes'}}), {1: 'lightgreen', 2: 'blue', 3: 'red', 4: 'blue'});
+    assert.equal(fills({...config, ...palette, reactions: {fill: true, always: true}}, {1: {reaction: 'yes'}})[2], 'gainsboro');
+    assert.deepEqual(fills(themed({...config, theme: 'night', stacks: true}), {1: {reaction: 'yes'}}),
+        {1: '#f0d08a', 2: '#2c2f2a', 3: '#2c2a33', 4: '#2c2f2a'});
     // and off again on a level
     assert.equal(fills({...config, ...palette, floors: {...config.floors, 1: {...config.floors[1], stacks: null}}})[1], 'whitesmoke');
 

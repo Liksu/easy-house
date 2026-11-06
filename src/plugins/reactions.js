@@ -60,9 +60,10 @@ export default {
         const {colors, fills, style, styles} = options;
         const reaction = unit.state[options.field];
 
+        // a unit without a reaction stays as it is (a fill of stacks shows), unless `always`
         if (reaction == null) return {
             ...(options.always && {stroke: colors.none, strokeWidth: style.strokeWidth}),
-            ...(options.fill && {fill: fills.none}),
+            ...(options.always && options.fill && {fill: fills.none}),
             ...styles.none
         };
 
